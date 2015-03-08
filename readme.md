@@ -12,7 +12,7 @@ ofTexture result = proc.get("one_of_the_data_textures_from_the_list");
 
 gpgpu::Process proc2;  
 //bla  
-proc2.set( string the_name_of_one_of_its_data_textures, result ); //set this data from a texture  
+proc2.set( "a_data_texture_name", result ); //set this data from a texture  
 //etc  
 //etc  
 
