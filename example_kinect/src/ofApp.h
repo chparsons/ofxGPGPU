@@ -29,7 +29,6 @@ class ofApp : public ofBaseApp{
 
     ofTexture ftex;
     ofFloatPixels fpix;
-    float *flut;
     void update_ftex( uint16_t *mm_depth_pix );
     void init_ftex( int w, int h );
 
@@ -45,4 +44,20 @@ class ofApp : public ofBaseApp{
     void log(int x, int y);
     ofVec2f mouse;
 
+    gpgpu::Process* cur_proc();
+    string cur_proc_str();
+    void next_render_process();
+    void prev_render_process();
+    int render_process;
+    enum _render_process
+    {
+      _test, 
+      _p3d, 
+      _normals, 
+      _normals_vis,
+      _bilateral,
+      _flowfield,
+      _render_process_length
+    };
 };
+

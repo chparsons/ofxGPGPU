@@ -66,10 +66,13 @@ namespace gpgpu
       int channels;
       int curfbo;
       int _size;
+      string _name;
 
       ofFbo fbos[2];
       map<string,ofTexture> input_texs;
       //map<string,ofFbo> input_texs;
+      //void init_input_tex( string id );
+
       ofShader of_shader; 
 
       ofFloatPixels fpix;
@@ -90,8 +93,6 @@ namespace gpgpu
       int get_bbuf_idx( string id );
       int get_pix_idx( int x, int y );
       //int get_tex_idx( string id );
-
-      void init_input_tex( string id );
 
       bool is_input_tex( string id );
       bool is_backbuffer( string id );

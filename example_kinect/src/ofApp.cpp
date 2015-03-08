@@ -15,7 +15,6 @@ void ofApp::setup(){
   mouse.y = 300;
 
   kinect.setRegistration(false);
-  //kinect.setDepthMode( FREENECT_DEPTH_11BIT );
   //kinect.setDepthClipping( near_mm, far_mm ); //mm (50cm - 4mt)
   //kinect.enableDepthNearValueWhite(false);
   //ir, rgb, texture
@@ -24,7 +23,6 @@ void ofApp::setup(){
 
   bDrawPointCloud = false;
 
-
   int w = kinect.width;
   int h = kinect.height;
 
@@ -32,18 +30,21 @@ void ofApp::setup(){
 
   test.init( "glsl/test.frag", w, h );
 
-  //p3d.init("glsl/depth_to_p3d.frag",w,h);
-  //ofAddListener( p3d.on_update, this, &ofApp::p3d_update );
+  p3d.init("glsl/depth_to_p3d.frag",w,h);
+  ofAddListener( p3d.on_update, this, &ofApp::p3d_update );
 
-  //normals.init("glsl/normals.frag",w,h);
-  //normals_vis.init("glsl/normals_vis.frag",w,h);
-  //bilateral.init( "glsl/bilateral.frag", w, h );
-  //flowfield.init("glsl/flowfield.frag",w,h);
+  normals.init("glsl/normals.frag",w,h);
+  normals_vis.init("glsl/normals_vis.frag",w,h);
+
+  bilateral.init( "glsl/bilateral.frag", w, h );
+
+  flowfield.init("glsl/flowfield.frag",w,h);
 
 }
 
 void ofApp::p3d_update(ofShader& shader)
 {
+  //TODO
   //shader.setUniform1f( "width", kinect.width );
   //shader.setUniform1f( "height", kinect.height );
   //shader.setUniform1f( "near_mm", near_mm * 0.001 ); //mm to mt
@@ -65,25 +66,26 @@ void ofApp::update()
   uint16_t *mm_depth_pix = kinect.getRawDepthPixels();
   update_ftex( mm_depth_pix ); 
 
-  test.set( "_input", ftex ); 
+  test.set( "data", ftex ); 
   test.update();
 
-  //flowfield.set( "data", ftex ); 
-  //flowfield.update();
+  flowfield.set( "data", ftex ); 
+  flowfield.update(); 
 
-  //bilateral.set( "_input", ftex ); 
-  //bilateral.update();
+  //p3d.set( "data", kinect.getDepthTextureReference() ); 
+  p3d.set( "data", ftex );
+  //p3d.set( "data", bilateral.get() ); 
+  p3d.update();
 
-  ////p3d.set( "data", kinect.getDepthTextureReference() ); 
-  ////p3d.set( "data", ftex );
-  //p3d.set( "data", bilateral.get("_input") ); 
-  //p3d.update();
+  normals.set( "data", p3d.get() );
+  normals.update();  
 
-  //normals.set( "data", p3d.get("data") );
-  //normals.update();  
+  normals_vis.set( "data", normals.get() );
+  normals_vis.update();
 
-  //normals_vis.set( "data", normals.get("data") );
-  //normals_vis.update();
+  //bilateral.set( "data", ftex ); 
+  bilateral.set( "data", normals_vis.get() ); 
+  bilateral.update();
 
   if (mouse.x > -1 && mouse.y > -1)
   {
@@ -109,23 +111,64 @@ void ofApp::draw(){
     int h = kinect.height;
 
     kinect.drawDepth(0, 0, w, h);
-
-    test.get().draw(w, 0, w, h);
-
-    ////gaussian.draw(0, 480-100, w, h);
-    ////p3d.draw(0, 480, w, h);
-    ////normals_cpu_tex.draw(0, 480-100, w*2, h*2);
-    ////normals.draw(640, 10, w, h);
-
-    //bilateral.get("_output").draw(w+10, 0, w, h);
-    //bilateral.get().draw(w+10, 0, w, h);
-
-    //normals_vis.get("data").draw(0, 480-100, w, h);
-
-    //flowfield.get("data").draw(640, 480-100, w, h);
+    cur_proc()->get().draw(w, 0, w, h);
   }
 
+  ofDrawBitmapStringHighlight( "current process: "+cur_proc_str(), 20, ofGetHeight()-20, ofColor::yellow, ofColor::magenta );
 }
+
+gpgpu::Process* ofApp::cur_proc()
+{
+  switch( render_process )
+  {
+    case _test:
+      return &test;
+
+    case _p3d: 
+      return &p3d;
+
+    case _normals: 
+      return &normals;
+
+    case _normals_vis: 
+      return &normals_vis;
+
+    case _bilateral: 
+      return &bilateral;
+
+    case _flowfield: 
+      return &flowfield;
+  }
+
+  return NULL;
+}
+
+string ofApp::cur_proc_str()
+{
+  switch( render_process )
+  {
+    case _test:
+      return "test";
+
+    case _p3d: 
+      return "p3d";
+
+    case _normals: 
+      return "normals";
+
+    case _normals_vis: 
+      return "normals_vis";
+
+    case _bilateral: 
+      return "bilateral";
+
+    case _flowfield: 
+      return "flowfield";
+
+  }
+  return "unnamed process";
+}
+
 
 
 //ofxCamaraLucida::DepthCamera
@@ -139,16 +182,9 @@ void ofApp::update_ftex( uint16_t *mm_depth_pix )
   int len = w * h;
 
   for (int i = 0; i < len; i++)
-  //for (int y = 0; y < h; y++)
-  //for (int x = 0; x < w; x++)
   {
-    //int i = y * w + x;
     uint16_t mm = mm_depth_pix[ i ];
-    //fpix[ i ] = flut[ mm ]; 
     fpix[ i ] = mm; 
-    //fpix[ i+1 ] = flut[ mm ]; 
-    //fpix[ i+2 ] = flut[ mm ]; 
-    //fpix[ i+3 ] = flut[ mm ]; 
   }
 
   ftex.loadData( fpix );
@@ -163,19 +199,8 @@ void ofApp::init_ftex(int w, int h)
   }
 
   ftex.allocate( w, h, GL_LUMINANCE32F_ARB );
-  //ftex.allocate( w, h, GL_RGBA32F_ARB );
   fpix.allocate( w, h, 1 );
-  //fpix.allocate( w, h, 4 );
   fpix.set( 0 );
-
-  flut = new float[ (int)far_mm ];
-  flut[0] = 0;
-  for ( int i = 1; i < far_mm; i++ )
-  {
-    flut[ i ] = ofMap( i, 
-        near_mm, far_mm, 
-        1., 0., true );
-  }
 };
 
 void ofApp::log(int x, int y)
@@ -191,18 +216,32 @@ void ofApp::log(int x, int y)
   _fcol = _fpix.getColor(x,y);
   ofLog() << "ftex.readToPixels: " << _fcol.r << ", " << _fcol.g << ", " << _fcol.b << ", " << _fcol.a; 
 
-  test.get("_input").readToPixels(_fpix);
+  cur_proc()->get("data").readToPixels(_fpix);
   _fcol = _fpix.getColor(x,y);
-  ofLog() << "test.get(\"_input\").readToPixels: " << _fcol.r << ", " << _fcol.g << ", " << _fcol.b << ", " << _fcol.a;
+  ofLog() << cur_proc_str() << " get(\"data\").readToPixels: " << _fcol.r << ", " << _fcol.g << ", " << _fcol.b << ", " << _fcol.a;
 
-  test.get().readToPixels(_fpix);
+  cur_proc()->get().readToPixels(_fpix);
   _fcol = _fpix.getColor(x,y);
-  ofLog() << "test.get().readToPixels: " << _fcol.r << ", " << _fcol.g << ", " << _fcol.b << ", " << _fcol.a; 
+  ofLog() << cur_proc_str() << " get().readToPixels: " << _fcol.r << ", " << _fcol.g << ", " << _fcol.b << ", " << _fcol.a; 
 
-  ofLog() << "test.log(x,y): ";
-  test.log(x,y);
+  ofLog() << cur_proc_str() << " log(x,y): ";
+  cur_proc()->log(x,y);
 
   ofLog() << "============="; 
+}
+
+void ofApp::next_render_process()
+{
+  int len = _render_process_length;
+  ++render_process;
+  render_process = render_process == len ? 0 : render_process;
+}
+
+void ofApp::prev_render_process()
+{
+  int len = _render_process_length;
+  --render_process;
+  render_process = render_process == -1 ? len-1 : render_process;
 }
 
 void ofApp::keyPressed(int key){
@@ -218,10 +257,24 @@ void ofApp::keyPressed(int key){
       break;
 
     case 'd':
-      test.log_config();
-      test.log("_input");
-      ofLog() << "test result";
-      test.log();
+      cur_proc()->log_config();
+      ofLog() << cur_proc_str() << " data:";
+      cur_proc()->log("data");
+      break;
+
+    case 'r':
+      cur_proc()->log_config();
+      ofLog() << cur_proc_str() << " result:";
+      cur_proc()->log();
+      break;
+
+
+    case 'z':
+      prev_render_process();
+      break;
+
+    case 'x':
+      next_render_process();
       break;
 
   }

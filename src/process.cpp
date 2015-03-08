@@ -6,6 +6,7 @@ void gpgpu::Process::init(
     int width, int height )
 {
   this->shader = shader;
+  _name = typeid(shader).name();
 
   of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->frag() );
   of_shader.linkProgram();
@@ -39,6 +40,7 @@ void gpgpu::Process::init(
     int width, int height, 
     vector<string> backbuffers )
 {
+  _name = frag_file;
   of_shader.load( "", frag_file );
   _init( width, height, backbuffers );
 };
@@ -131,20 +133,15 @@ void gpgpu::Process::update( int passes )
     // input textures
     int itex = 0;
     for ( map<string,ofTexture>::iterator it = input_texs.begin(); it != input_texs.end(); it++ )
+    //for ( map<string,ofFbo>::iterator it = input_texs.begin(); it != input_texs.end(); it++ )
     {
       of_shader.setUniformTexture( 
-        it->first, it->second,
+        it->first, 
+        it->second,
+        //it->second.getTextureReference(),
         nbbufs + itex );
       itex++;
     }
-    //for ( map<string,ofFbo>::iterator it = input_texs.begin(); it != input_texs.end(); it++ )
-    //{
-      //of_shader.setUniformTexture( 
-        //it->first, 
-        //it->second.getTextureReference(),
-        //nbbufs + itex );
-      //itex++;
-    //}
 
     //quad( -1, -1, 2, 2, width, height );
     quad(0,0,width,height,width,height);
@@ -167,6 +164,7 @@ void gpgpu::Process::set( string id, ofTexture& data )
   if ( is_backbuffer( id ) ) 
   {
     ofLogWarning() 
+      << "[" << _name << "] "
       << "gpgpu::Process::set "
       << "data texture id "
       << "[" << id << "] "
@@ -177,6 +175,7 @@ void gpgpu::Process::set( string id, ofTexture& data )
   else if ( ! is_input_tex( id ) )
   {
     ofLogWarning() 
+      << "[" << _name << "] "
       << "gpgpu::Process::set "
       << "data texture id "
       << "[" << id << "] "
@@ -219,6 +218,7 @@ void gpgpu::Process::set( string id, vector<float>& data )
   else
   {
     ofLogWarning() 
+      << "[" << _name << "] "
       << "gpgpu::Process"
       << "set data: "
       << "[" << id << "] "
@@ -239,6 +239,7 @@ void gpgpu::Process::set_data_tex( ofTexture& tex, vector<float>& data, string i
   if ( data.size() != size() )
   {
     ofLogError() 
+      << "[" << _name << "] "
       << "gpgpu::Process "
       << "set data texture "
       << "[" << id << "] "
@@ -275,8 +276,7 @@ ofTexture& gpgpu::Process::get( string id )
   if ( is_input_tex(id) )
   {
     return input_texs[id];
-    //return input_texs[id]
-      //.getTextureReference();
+    //return input_texs[id].getTextureReference();
   }
 
   // or a backbuffer
@@ -348,7 +348,11 @@ bool gpgpu::Process::check_bbuf( int i, string id )
 {
   if ( i == -1 ) 
   {
-    ofLogWarning() << "gpgpu::Process::check_bbuf backbuffer id: "+id+" not found";
+    ofLogWarning() 
+      << "[" << _name << "] "
+      << "gpgpu::Process::check_bbuf backbuffer id: "
+      << id
+      << " not found";
     return false;
   }
   return true;
@@ -384,10 +388,7 @@ int gpgpu::Process::get_bbuf_idx( string id )
   vector<string>::iterator it = std::find(backbuffers.begin(), backbuffers.end(), id);
   int i = it - backbuffers.begin();
   if ( it == backbuffers.end() || i >= fbos[curfbo].getNumTextures() )
-  {
-    //ofLogWarning() << "gpgpu::Process::get_bbuf_idx() index not found for data id: "+id;
     return -1;
-  }
   return i;
 };
 
@@ -404,10 +405,12 @@ int gpgpu::Process::size()
 
 void gpgpu::Process::log( int x, int y, string id )
 {
-  ofLog() << "log data"
-    << " id (" << id << ")"
-    << " xy (" << x << "," << y << ")"
-    << " curfbo (" << curfbo << ")";
+  ofLog() 
+    << "[" << _name << "] "
+    << "log data"
+    << ", id=" << id
+    << ", xy=(" << x << "," << y << ")"
+    << ", curfbo=" << curfbo;
 
   int i = get_pix_idx(x,y);
 
@@ -425,9 +428,11 @@ void gpgpu::Process::log( int x, int y, string id )
 
 void gpgpu::Process::log( string id )
 {
-  ofLog() << "log data"
-    << " id (" << id << ")"
-    << " curfbo (" << curfbo << ")";
+  ofLog() 
+    << "[" << _name << "] "
+    << "log data"
+    << ", id=" << id
+    << ", curfbo=" << curfbo;
 
   int w = this->width;
   int h = this->height;
@@ -455,13 +460,14 @@ void gpgpu::Process::log( string id )
 void gpgpu::Process::log_datum( int i, int x, int y, float r, float g, float b, float a )
 {
   ofLog() << "\t" 
+    << "[" << _name << "] "
     << "idx: "
     << ofToString(i) 
-    << " / xy: "
+    << "\t xy: "
     << ofToString(x) 
     << ","
     << ofToString(y) 
-    << " / data: "
+    << "\t data: "
     << ofToString(r)
     << ","
     << ofToString(g)
@@ -474,10 +480,12 @@ void gpgpu::Process::log_datum( int i, int x, int y, float r, float g, float b, 
 
 void gpgpu::Process::log_config()
 {
-  ofLog() << "log process config";
+  ofLog() 
+    << "[" << _name << "] "
+    << "log process config";
 
   int nbbufs = backbuffers.size(); 
-  ofLog() << "\t backbuffers: " << nbbufs;
+  ofLog() << "\t backbuffers size: " << nbbufs;
 
   for (int i = 0; i < nbbufs; i++)
     ofLog() << "\t\t" << backbuffers[i];
@@ -488,16 +496,17 @@ void gpgpu::Process::log_config()
   {
     ofTextureData& texd = it->second.getTextureData();
     //ofTextureData& texd = it->second.getTextureReference().getTextureData();
-    ofLog() << "\t\t" << it->first
-      << "( " 
+    ofLog() << "\t\t" 
+      << "id: "
+      << it->first
+      << ", "
       << "width: " << texd.tex_w
       << ", "
       << "height: " << texd.tex_h
       << ", "
       << "allocated: " << texd.bAllocated
       << ", "
-      << "internal format: " << ofGetGlInternalFormatName(texd.glTypeInternal)
-      << " )";
+      << "internal format: " << ofGetGlInternalFormatName(texd.glTypeInternal);
   }
 
 };
