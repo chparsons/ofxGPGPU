@@ -5,20 +5,21 @@ it can set, update and get data, for example:
 
 ```cpp
 gpgpu::Process proc;  
-proc.init( "shader_name", int width, int height, vector<string> list_of_data_texture_names_on_the_shader );  
-proc.set( "one_of_the_data_textures_from_the_list", float* data );  
-proc.update( int number_of_iterations_to_ping_pong );  
-ofTexture result = proc.get("one_of_the_data_textures_from_the_list");  
+proc.init( "shader_name", int width, int height, vector<string> backbuffers_to_store_results );  
+proc.set( "an_input_data_texture_on_the_shader", float* input_data );  
+proc.update( int ping_pong_iterations );  
+ofTexture intput_tex_data = proc.get("an_input_data_texture_on_the_shader");  
+ofTexture result = proc.get();  
 
 gpgpu::Process proc2;  
 //bla  
-proc2.set( "a_data_texture_name", result ); //set this data from a texture  
+proc2.set( "input_data_texture_xxx", result ); //set some input data with a texture  
 //etc  
 //etc  
 
-//or draw something with a result  
+//or draw a result  
 draw_shader.begin();  
-draw_shader.setUniformTexture("result_to_draw", proc2.get("resultxxx"), procxxx.get_data_idx("resultxxx"));  
+draw_shader.setUniformTexture("result_to_draw", proc2.get(), 0);  
 mesh.draw();  
-drawShader.end();  
+draw_shader.end();  
 ```
