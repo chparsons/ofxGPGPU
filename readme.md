@@ -17,7 +17,7 @@ proc2.set( "input_data_texture_xxx", result ); //set some input data with a text
 //etc  
 //etc  
 
-//or draw a result  
+//draw some results  
 draw_shader.begin();  
 draw_shader.setUniformTexture("result_to_draw", proc2.get(), 0);  
 mesh.draw();  
