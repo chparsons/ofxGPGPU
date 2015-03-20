@@ -8,13 +8,10 @@ void gpgpu::Process::init(
   this->shader = shader;
   _name = typeid(shader).name();
 
-  of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->frag() );
+  of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->fragment() );
   of_shader.linkProgram();
 
-  shader->init( width, height );
-
   _init( width, height, shader->backbuffers() );
-
 };
 
 void gpgpu::Process::init(
@@ -58,6 +55,9 @@ void gpgpu::Process::_init(
   channels = 4; //rgba
 
   _size = width * height * channels;
+
+  //_data = new float[_size];
+  //memset(_data, 0, _size);
 
   fpix.allocate(width, height, channels);
 
@@ -194,11 +194,11 @@ void gpgpu::Process::set( string id, ofTexture& data )
   //input_texs[id].end();
 };
 
-void gpgpu::Process::set( string id, float* _data )
+void gpgpu::Process::set( string id, float* data )
 {
-  vector<float> data;
-  data.assign( _data, _data + size() );
-  set( id, data );
+  vector<float> data_;
+  data_.assign( data, data + _size );
+  set( id, data_ );
 };
 
 void gpgpu::Process::set( string id, vector<float>& data )
@@ -236,7 +236,7 @@ void gpgpu::Process::set_bbuf_data( string id, vector<float>& data )
 void gpgpu::Process::set_data_tex( ofTexture& tex, vector<float>& data, string id )
 { 
 
-  if ( data.size() != size() )
+  if ( data.size() != _size )
   {
     ofLogError() 
       << "[" << _name << "] "
@@ -244,7 +244,7 @@ void gpgpu::Process::set_data_tex( ofTexture& tex, vector<float>& data, string i
       << "set data texture "
       << "[" << id << "] "
       << "data size is (" << data.size() << ") "
-      << "and (" << size() << ") is expected";
+      << "and (" << _size << ") is expected";
     return;
   }
 
@@ -286,13 +286,16 @@ ofTexture& gpgpu::Process::get( string id )
     .getTextureReference( i );
 };
 
-vector<float> gpgpu::Process::get_data( string id )
+float* gpgpu::Process::get_data( string id )
+//vector<float>& gpgpu::Process::get_data( string id )
 {
   read_to_fpix( id );
-  float* _data = fpix.getPixels();
-  vector<float> data;
-  data.assign( _data, _data + size() );
-  return data;
+  return fpix.getPixels();
+  //memcpy( _data, fpix.getPixels(), _size );
+  //return _data;
+  //float* data_ = fpix.getPixels();
+  //_data.assign( data_, data_ + _size );
+  //return _data;
 };
 
 ofVec4f gpgpu::Process::get_data( int x, int y, string id )
@@ -335,11 +338,11 @@ void gpgpu::Process::init_bbuf( string id )
   int i = get_bbuf_idx( id );
   if ( !check_bbuf(i,id) ) return;
 
-  vector<float> zeros( size(), 0.0f );
+  vector<float> zeros( _size, 0.0f );
   set_bbuf_data( backbuffers[i], zeros );
 
-  //float* zeros = new float[ size() ];
-  //memset( zeros, 0, sizeof(float) * size() );
+  //float* zeros = new float[ _size ];
+  //memset( zeros, 0, sizeof(float) * _size );
   //set_bbuf_data( backbuffers[i], zeros );
   //delete[] zeros;
 };
@@ -438,7 +441,6 @@ void gpgpu::Process::log( string id )
   int h = this->height;
 
   //float* data = get_data( id );
-
   read_to_fpix( id );
 
   for (int y = 0; y < h; y++)

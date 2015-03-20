@@ -11,8 +11,12 @@ namespace gpgpu
 
     public: 
 
-      Process(){};
-      ~Process(){};
+      Process()
+      {
+        shader = NULL;
+      };
+      ~Process()
+      { /*delete _data;*/ };
 
       void init(
           gpgpu::Shader* shader, 
@@ -45,8 +49,8 @@ namespace gpgpu
       //it is a performance bottleneck
       //TODO impl https://github.com/satoruhiga/ofxFastFboReader
       //TODO cache fpix by id
-      //float* get_data( string id = "" );
-      vector<float> get_data( string id = "" );
+      float* get_data( string id = "" );
+      //vector<float>& get_data( string id = "" );
       ofVec4f get_data( int x, int y, string id = "" );
 
       int size();
@@ -74,6 +78,9 @@ namespace gpgpu
       //void init_input_tex( string id );
 
       ofShader of_shader; 
+
+      //float *_data;
+      //vector<float> _data;
 
       ofFloatPixels fpix;
       void read_to_fpix( string id = "");

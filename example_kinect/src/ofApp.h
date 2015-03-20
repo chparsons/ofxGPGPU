@@ -37,7 +37,6 @@ class ofApp : public ofBaseApp{
     gpgpu::Process normals;
     gpgpu::Process normals_vis;
     gpgpu::Process bilateral;
-    gpgpu::Process flowfield;
 
     void p3d_update(ofShader& shader); 
 

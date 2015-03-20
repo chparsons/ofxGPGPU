@@ -24,6 +24,7 @@ void ofApp::setup(){
       }
     }
 
+    oddevenmergesort.init(w,h);
     sort.init( &oddevenmergesort, w, h );
 
     // set initial state

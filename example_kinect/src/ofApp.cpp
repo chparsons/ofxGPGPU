@@ -30,16 +30,13 @@ void ofApp::setup(){
 
   test.init( "glsl/test.frag", w, h );
 
-  p3d.init("glsl/depth_to_p3d.frag",w,h);
+  p3d.init("glsl/kinect_unproject.frag",w,h);
   ofAddListener( p3d.on_update, this, &ofApp::p3d_update );
 
   normals.init("glsl/normals.frag",w,h);
   normals_vis.init("glsl/normals_vis.frag",w,h);
 
   bilateral.init( "glsl/bilateral.frag", w, h );
-
-  flowfield.init("glsl/flowfield.frag",w,h);
-
 }
 
 void ofApp::p3d_update(ofShader& shader)
@@ -68,9 +65,6 @@ void ofApp::update()
 
   test.set( "data", ftex ); 
   test.update();
-
-  flowfield.set( "data", ftex ); 
-  flowfield.update(); 
 
   //p3d.set( "data", kinect.getDepthTextureReference() ); 
   p3d.set( "data", ftex );
@@ -135,9 +129,6 @@ gpgpu::Process* ofApp::cur_proc()
 
     case _bilateral: 
       return &bilateral;
-
-    case _flowfield: 
-      return &flowfield;
   }
 
   return NULL;
@@ -161,11 +152,8 @@ string ofApp::cur_proc_str()
 
     case _bilateral: 
       return "bilateral";
-
-    case _flowfield: 
-      return "flowfield";
-
   }
+
   return "unnamed process";
 }
 

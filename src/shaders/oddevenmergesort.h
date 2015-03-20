@@ -22,13 +22,6 @@ class OddEvenMergeSort : public gpgpu::Shader
     pass = 0;
   };
 
-  vector<string> backbuffers()
-  {
-    vector<string> backbuffer;
-    backbuffer.push_back("data");
-    return backbuffer;
-  };
-
   void update( ofShader& shader )
   { 
 
@@ -67,9 +60,8 @@ class OddEvenMergeSort : public gpgpu::Shader
 
   };
 
-  string frag()
+  string fragment()
   {
-
     return "#version 120\n #extension GL_ARB_texture_rectangle : enable\n " STRINGIFY(
 
     uniform sampler2DRect data;
@@ -114,7 +106,7 @@ class OddEvenMergeSort : public gpgpu::Shader
       gl_FragColor = (self.x*compare < partner.x*compare) ? self : partner;
     }
 
-    ); //frag code
+    ); //fragment code
   };
 
   private:
@@ -123,6 +115,5 @@ class OddEvenMergeSort : public gpgpu::Shader
   int stage, pass;
 
 }; //endof class
-
 }; //endof namespace
 

@@ -37,18 +37,16 @@ void main()
   float dist;
 
   for ( int i = start_id ; i <= stop_id; i++ )
+  for ( int j = start_id; j <= stop_id; j++ )
   {
-    for ( int j = start_id; j <= stop_id; j++ )
-    {
 
-      sample = texture2DRect( data, loc + vec2(i,j) ).rgb;
-      dist = float(i*i) + float(j*j);
+    sample = texture2DRect( data, loc + vec2(i,j) ).rgb;
+    dist = float(i*i) + float(j*j);
 
-      inten = exp( (-1.0 * dist / (2.0 * domain_sigma_2))) / ( 2.0f * PI * domain_sigma_2) * exp( (-1.0 * (curRGB - sample) * (curRGB - sample) / (range_sigma_2)) ) ;
+    inten = exp( (-1.0 * dist / (2.0 * domain_sigma_2))) / ( 2.0f * PI * domain_sigma_2) * exp( (-1.0 * (curRGB - sample) * (curRGB - sample) / (range_sigma_2)) ) ;
 
-      intenSum += inten;
-      graySum += inten * sample;
-    }
+    intenSum += inten;
+    graySum += inten * sample;
   }
 
   buf = graySum / intenSum;  

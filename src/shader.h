@@ -7,19 +7,20 @@
 
 namespace gpgpu
 {
-
   class Shader
   {
     public: 
 
-      virtual void init( int width, int height ) = 0;
-      virtual void update( ofShader& shader ) = 0;
-      virtual string frag() = 0;
-      virtual vector<string> backbuffers() = 0;
+      virtual string fragment() = 0;
 
-    protected:
-      int width, height;
+      virtual vector<string> backbuffers()
+      {
+        vector<string> backbuffer;
+        backbuffer.push_back("data");
+        return backbuffer;
+      };
+
+      virtual void update( ofShader& shader ){};
   };
-
 };
  
