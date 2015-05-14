@@ -38,9 +38,9 @@ namespace gpgpu
 
       void update( int passes = 1 );
 
-      void set( string id, ofTexture& data );
-      void set( string id, vector<float>& data );
-      void set( string id, float* data );
+      Process& set( string id, ofTexture& data );
+      Process& set( string id, vector<float>& data );
+      Process& set( string id, float* data );
 
       ofTexture& get( string id = "" );
 
@@ -50,6 +50,7 @@ namespace gpgpu
       //TODO impl https://github.com/satoruhiga/ofxFastFboReader
       //TODO cache fpix by id
       float* get_data( string id = "" );
+      //ofFloatPixels& get_data( string id = "" );
       //vector<float>& get_data( string id = "" );
       ofVec4f get_data( int x, int y, string id = "" );
 

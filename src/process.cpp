@@ -158,7 +158,7 @@ void gpgpu::Process::update( int passes )
 
 }; 
 
-void gpgpu::Process::set( string id, ofTexture& data )
+gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
 {  
 
   if ( is_backbuffer( id ) ) 
@@ -169,7 +169,7 @@ void gpgpu::Process::set( string id, ofTexture& data )
       << "data texture id "
       << "[" << id << "] "
       << "is a backbuffer";
-    return;
+    return *this;
   }
 
   else if ( ! is_input_tex( id ) )
@@ -192,16 +192,18 @@ void gpgpu::Process::set( string id, ofTexture& data )
   //ofSetColor(255);
   //data.draw(0,0);
   //input_texs[id].end();
+
+  return *this;
 };
 
-void gpgpu::Process::set( string id, float* data )
+gpgpu::Process& gpgpu::Process::set( string id, float* data )
 {
   vector<float> data_;
   data_.assign( data, data + _size );
-  set( id, data_ );
+  return set( id, data_ );
 };
 
-void gpgpu::Process::set( string id, vector<float>& data )
+gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
 {
 
   if ( is_backbuffer( id ) ) 
@@ -224,6 +226,8 @@ void gpgpu::Process::set( string id, vector<float>& data )
       << "[" << id << "] "
       << "not found";
   }
+
+  return *this;
 };
 
 void gpgpu::Process::set_bbuf_data( string id, vector<float>& data )
@@ -297,6 +301,12 @@ float* gpgpu::Process::get_data( string id )
   //_data.assign( data_, data_ + _size );
   //return _data;
 };
+
+//ofFloatPixels& gpgpu::Process::get_data( string id )
+//{
+  //read_to_fpix( id );
+  //return fpix;
+//};
 
 ofVec4f gpgpu::Process::get_data( int x, int y, string id )
 {
