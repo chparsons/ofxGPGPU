@@ -15,25 +15,24 @@ namespace gpgpu
       {
         shader = NULL;
       };
-      ~Process()
-      { /*delete _data;*/ };
+      ~Process(){};
 
       void init(
           gpgpu::Shader* shader, 
-          int width, int height );
+          int _width, int _height );
 
       void init(
           string frag_file, 
-          int width, int height );
+          int _width, int _height );
 
       void init(
           string frag_file, 
-          int width, int height, 
+          int _width, int _height, 
           vector<string> backbuffers );
 
       void init(
           string frag_file, 
-          int width, int height, 
+          int _width, int _height, 
           string backbuffer );
 
       void update( int passes = 1 );
@@ -56,6 +55,16 @@ namespace gpgpu
 
       int size();
 
+      int width()
+      {
+        return _width;
+      };
+
+      int height()
+      {
+        return _height;
+      };
+
       void log( int x, int y, string id = "" );
       void log( string id = "" );
       void log_config();
@@ -67,10 +76,10 @@ namespace gpgpu
 
       vector<string> backbuffers;
 
-      int width, height;
+      int _width, _height;
+      int _size;
       int channels;
       int curfbo;
-      int _size;
       string _name;
 
       ofFbo fbos[2];
@@ -80,16 +89,13 @@ namespace gpgpu
 
       ofShader of_shader; 
 
-      //float *_data;
-      //vector<float> _data;
-
       ofFloatPixels fpix;
       void read_to_fpix( string id = "");
 
       gpgpu::Shader* shader; 
 
       void _init( 
-          int width, int height, 
+          int _width, int _height, 
           vector<string> backbuffers );
 
       void set_bbuf_data( string id, vector<float>& data );
@@ -105,7 +111,7 @@ namespace gpgpu
       bool is_input_tex( string id );
       bool is_backbuffer( string id );
 
-      void quad( float x, float y, float width, float height, float s, float t );
+      void quad( float x, float y, float _width, float _height, float s, float t );
 
       void log_datum( int i, int x, int y, float r, float g, float b, float a );
 

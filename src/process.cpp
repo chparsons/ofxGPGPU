@@ -3,7 +3,7 @@
 
 void gpgpu::Process::init(
     gpgpu::Shader* shader, 
-    int width, int height )
+    int _width, int _height )
 {
   this->shader = shader;
   _name = typeid(shader).name();
@@ -11,55 +11,52 @@ void gpgpu::Process::init(
   of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->fragment() );
   of_shader.linkProgram();
 
-  _init( width, height, shader->backbuffers() );
+  _init( _width, _height, shader->backbuffers() );
 };
 
 void gpgpu::Process::init(
     string frag_file, 
-    int width, int height )
+    int _width, int _height )
 {
   vector<string> backbuffers;
-  init( frag_file, width, height, backbuffers );
+  init( frag_file, _width, _height, backbuffers );
 };
 
 void gpgpu::Process::init(
     string frag_file, 
-    int width, int height, 
+    int _width, int _height, 
     string backbuffer )
 {
   vector<string> backbuffers;
   backbuffers.push_back( backbuffer );
-  init( frag_file, width, height, backbuffers );
+  init( frag_file, _width, _height, backbuffers );
 };
 
 void gpgpu::Process::init(
     string frag_file, 
-    int width, int height, 
+    int _width, int _height, 
     vector<string> backbuffers )
 {
   _name = frag_file;
   of_shader.load( "", frag_file );
-  _init( width, height, backbuffers );
+  _init( _width, _height, backbuffers );
 };
 
 void gpgpu::Process::_init(
-    int width, int height, 
+    int _width, int _height, 
     vector<string> backbuffers )
 {
 
-  this->width = width;
-  this->height = height;
+  this->_width = _width;
+  this->_height = _height;
   this->backbuffers = backbuffers;
 
   curfbo = 0;
   channels = 4; //rgba
 
-  _size = width * height * channels;
+  _size = _width * _height * channels;
 
-  //_data = new float[_size];
-  //memset(_data, 0, _size);
-
-  fpix.allocate(width, height, channels);
+  fpix.allocate(_width, _height, channels);
 
   int nbbufs = backbuffers.size();
 
@@ -72,8 +69,8 @@ void gpgpu::Process::_init(
   s.maxFilter = GL_NEAREST;
   s.wrapModeHorizontal = GL_CLAMP;
   s.wrapModeVertical = GL_CLAMP;
-  s.width = width;
-  s.height = height;
+  s.width = _width;
+  s.height = _height;
   //0.8.0 bug: on ofFbo.cpp this line should be commented out
   ////settings.numColorbuffers = settings.colorFormats.size();
   s.numColorbuffers = nbbufs > 0 ? nbbufs : 1;
@@ -107,7 +104,7 @@ void gpgpu::Process::update( int passes )
 
     //fbos[write].begin(false);
     //glPushAttrib(GL_ENABLE_BIT);
-    //glViewport(0,0,width,height);
+    //glViewport(0,0,_width,_height);
     //glDisable(GL_BLEND);
     //ofSetColor(255);
 
@@ -143,8 +140,8 @@ void gpgpu::Process::update( int passes )
       itex++;
     }
 
-    //quad( -1, -1, 2, 2, width, height );
-    quad(0,0,width,height,width,height);
+    //quad( -1, -1, 2, 2, _width, _height );
+    quad(0,0,_width,_height,_width,_height);
 
     of_shader.end();
 
@@ -253,14 +250,14 @@ void gpgpu::Process::set_data_tex( ofTexture& tex, vector<float>& data, string i
   }
 
   if ( !tex.isAllocated() )
-    tex.allocate( width, height, GL_RGBA32F_ARB, GL_RGBA, GL_FLOAT );
+    tex.allocate( _width, _height, GL_RGBA32F_ARB, GL_RGBA, GL_FLOAT );
 
-  tex.loadData( &data[0], width, height, GL_RGBA );
+  tex.loadData( &data[0], _width, _height, GL_RGBA );
 
   //tex.bind();
   //glTexSubImage2D( 
       //GL_TEXTURE_RECTANGLE_ARB, 0, 
-      //0, 0, width, height, 
+      //0, 0, _width, _height, 
       //GL_RGBA, GL_FLOAT, 
       //data );
   //tex.unbind();
@@ -291,15 +288,9 @@ ofTexture& gpgpu::Process::get( string id )
 };
 
 float* gpgpu::Process::get_data( string id )
-//vector<float>& gpgpu::Process::get_data( string id )
 {
   read_to_fpix( id );
   return fpix.getPixels();
-  //memcpy( _data, fpix.getPixels(), _size );
-  //return _data;
-  //float* data_ = fpix.getPixels();
-  //_data.assign( data_, data_ + _size );
-  //return _data;
 };
 
 //ofFloatPixels& gpgpu::Process::get_data( string id )
@@ -386,8 +377,8 @@ bool gpgpu::Process::check_bbuf( int i, string id )
   //s.maxFilter = GL_NEAREST;
   //s.wrapModeHorizontal = GL_CLAMP;
   //s.wrapModeVertical = GL_CLAMP;
-  //s.width = width;
-  //s.height = height;
+  //s.width = _width;
+  //s.height = _height;
   //s.numColorbuffers = 1;
 
   //fbo.allocate(s);
@@ -408,7 +399,7 @@ int gpgpu::Process::get_bbuf_idx( string id )
 
 int gpgpu::Process::get_pix_idx( int x, int y )
 {
-  return ( x + y * width ) * channels; 
+  return ( x + y * _width ) * channels; 
 };
 
 int gpgpu::Process::size()
@@ -447,8 +438,8 @@ void gpgpu::Process::log( string id )
     << ", id=" << id
     << ", curfbo=" << curfbo;
 
-  int w = this->width;
-  int h = this->height;
+  int w = this->_width;
+  int h = this->_height;
 
   //float* data = get_data( id );
   read_to_fpix( id );
@@ -533,7 +524,7 @@ bool gpgpu::Process::is_backbuffer( string id )
   return get_bbuf_idx( id ) > -1;
 }
 
-void gpgpu::Process::quad( float x, float y, float width, float height, float s, float t )
+void gpgpu::Process::quad( float x, float y, float _width, float _height, float s, float t )
 {
 
   glBegin(GL_TRIANGLES);
@@ -544,21 +535,21 @@ void gpgpu::Process::quad( float x, float y, float width, float height, float s,
   glVertex3f(x, y, 0);
   //ne
   glTexCoord2f(s, 0);
-  glVertex3f(x + width, y, 0);
+  glVertex3f(x + _width, y, 0);
   //sw
   glTexCoord2f(0, t);
-  glVertex3f(x, y + height, 0);
+  glVertex3f(x, y + _height, 0);
 
   //t2
   //ne
   glTexCoord2f(s, 0);
-  glVertex3f(x + width, y, 0);
+  glVertex3f(x + _width, y, 0);
   //se
   glTexCoord2f(s, t);
-  glVertex3f(x + width, y + height, 0);
+  glVertex3f(x + _width, y + _height, 0);
   //sw
   glTexCoord2f(0, t);
-  glVertex3f(x, y + height, 0);
+  glVertex3f(x, y + _height, 0);
 
   glEnd();
 
