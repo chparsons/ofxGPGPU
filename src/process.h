@@ -69,10 +69,10 @@ namespace gpgpu
       void log( int x, int y, string id = "" );
       void log( string id = "" );
       void log_config();
-
+    
       ofEvent<ofShader> on_init;
       ofEvent<ofShader> on_update;
-
+    
     private:
     
     

@@ -96,7 +96,7 @@ void gpgpu::Process::_init(
 
 void gpgpu::Process::update( int passes )
 {
-
+      
   while ( passes-- > 0 )
   {
     ofFbo* read = &(fbos[curfbo]);
@@ -156,18 +156,18 @@ void gpgpu::Process::update( int passes )
     curfbo = 1-curfbo;
   }
 
-  if(watch){
+  if(watch && GPGPGPU_WATCH){
     if(ofGetSeconds() % 3 == 0.0){
       if(file_change())
       {
-        //  seeguir aca
-        //  recargare el archivo del shader
-        //  se
         file_current_hash = file_hash();
-        //  implementar recargar del shader
-        
-        
+        of_shader.setupShaderFromFile(GL_FRAGMENT_SHADER, file_path);
+        of_shader.linkProgram();
       }
+    }
+    if(!of_shader.isLoaded())
+    {
+      ofLogNotice() << " ofxGPGPU : Cant compile shader.\r\n";
     }
   }
 
