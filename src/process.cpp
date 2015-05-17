@@ -156,7 +156,7 @@ void gpgpu::Process::update( int passes )
     curfbo = 1-curfbo;
   }
 
-  if(watch && GPGPGPU_WATCH){
+  if(watch && GPGPU_WATCH){
     if(ofGetSeconds() % 3 == 0.0){
       if(file_change())
       {

@@ -2,4 +2,4 @@
 
 #include "process.h"
 #include "shader.h"
-#define GPGPGPU_WATCH true
+#define GPGPU_WATCH true
