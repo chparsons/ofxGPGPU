@@ -16,9 +16,11 @@ void gpgpu::Process::init(
 
 void gpgpu::Process::init(
     string frag_file, 
-    int _width, int _height )
+    int _width, int _height ,bool _watch)
 {
   vector<string> backbuffers;
+  watch = _watch;
+  file_path = frag_file;
   init( frag_file, _width, _height, backbuffers );
 };
 
@@ -39,6 +41,7 @@ void gpgpu::Process::init(
 {
   _name = frag_file;
   of_shader.load( "", frag_file );
+  file_current_hash = file_hash();
   _init( _width, _height, backbuffers );
 };
 
@@ -153,7 +156,22 @@ void gpgpu::Process::update( int passes )
     curfbo = 1-curfbo;
   }
 
-}; 
+  if(watch){
+    if(ofGetSeconds() % 3 == 0.0){
+      if(file_change())
+      {
+        //  seeguir aca
+        //  recargare el archivo del shader
+        //  se
+        file_current_hash = file_hash();
+        //  implementar recargar del shader
+        
+        
+      }
+    }
+  }
+
+};
 
 gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
 {  
@@ -480,6 +498,53 @@ void gpgpu::Process::log_datum( int i, int x, int y, float r, float g, float b, 
     << ofToString(a)
     << "";
 };
+
+//  check file update
+
+bool gpgpu::Process::file_change()
+{
+  bool ret = false;
+  if(file_current_hash != file_hash())
+  {
+    ret = true;
+  }
+  return ret;
+}
+
+string gpgpu::Process::file_hash()
+{
+  string ret = "";
+  string  aboluste_path = ofFilePath::getAbsolutePath(file_path,true);
+  
+  char * writable = new char[aboluste_path.size() + 1];
+  std::copy(aboluste_path.begin(), aboluste_path.end(), writable);
+  writable[aboluste_path.size()] = '\0';
+  
+  unsigned char c[MD5_DIGEST_LENGTH];
+  char *filename=writable;
+  int i;
+  FILE *inFile = fopen (filename, "rb");
+  MD5_CTX mdContext;
+  int bytes;
+  unsigned char data[1024];
+  
+  if(inFile != NULL){
+    
+    MD5_Init (&mdContext);
+    while ((bytes = fread (data, 1, 1024, inFile)) != 0)
+      MD5_Update (&mdContext, data, bytes);
+    MD5_Final (c,&mdContext);
+    for(i = 0; i < MD5_DIGEST_LENGTH; i++)
+    {
+      ret+=(ofToHex(c[i]));
+    }
+    fclose (inFile);
+  }
+
+  return ret;
+}
+
+//
 
 void gpgpu::Process::log_config()
 {

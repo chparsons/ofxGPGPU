@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "shader.h"
+#include <openssl/md5.h>
 
 namespace gpgpu
 { 
@@ -23,7 +24,7 @@ namespace gpgpu
 
       void init(
           string frag_file, 
-          int _width, int _height );
+          int _width, int _height ,bool _watch = false);
 
       void init(
           string frag_file, 
@@ -73,7 +74,8 @@ namespace gpgpu
       ofEvent<ofShader> on_update;
 
     private:
-
+    
+    
       vector<string> backbuffers;
 
       int _width, _height;
@@ -87,14 +89,18 @@ namespace gpgpu
       //map<string,ofFbo> input_texs;
       //void init_input_tex( string id );
 
-      ofShader of_shader; 
+      ofShader of_shader;
 
       ofFloatPixels fpix;
       void read_to_fpix( string id = "");
 
-      gpgpu::Shader* shader; 
+      gpgpu::Shader* shader;
+    
+      string  file_path;
+      string  file_current_hash;
+      bool  watch;
 
-      void _init( 
+      void _init(
           int _width, int _height, 
           vector<string> backbuffers );
 
@@ -114,6 +120,10 @@ namespace gpgpu
       void quad( float x, float y, float _width, float _height, float s, float t );
 
       void log_datum( int i, int x, int y, float r, float g, float b, float a );
+    
+      //  check file update
+      string file_hash();
+      bool  file_change();
 
   };
 
