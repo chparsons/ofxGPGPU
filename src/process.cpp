@@ -516,14 +516,9 @@ string gpgpu::Process::file_hash()
   string ret = "";
   string  aboluste_path = ofFilePath::getAbsolutePath(file_path,true);
   
-  char * writable = new char[aboluste_path.size() + 1];
-  std::copy(aboluste_path.begin(), aboluste_path.end(), writable);
-  writable[aboluste_path.size()] = '\0';
-  
   unsigned char c[MD5_DIGEST_LENGTH];
-  char *filename=writable;
   int i;
-  FILE *inFile = fopen (filename, "rb");
+  FILE *inFile = fopen (aboluste_path.c_str(), "rb");
   MD5_CTX mdContext;
   int bytes;
   unsigned char data[1024];
@@ -540,7 +535,9 @@ string gpgpu::Process::file_hash()
     }
     fclose (inFile);
   }
-
+  
+  inFile = NULL;
+  
   return ret;
 }
 
