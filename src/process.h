@@ -43,6 +43,7 @@ namespace gpgpu
       Process& set( string id, float* data );
 
       ofTexture& get( string id = "" );
+      void get_scaled( float scale, ofTexture& dst, string id = "" );
 
       //try to avoid this one
       //though useful
@@ -85,6 +86,7 @@ namespace gpgpu
       string _name;
 
       ofFbo fbos[2];
+      ofFbo::Settings fbo_settings;
       map<string,ofTexture> input_texs;
       //map<string,ofFbo> input_texs;
       //void init_input_tex( string id );

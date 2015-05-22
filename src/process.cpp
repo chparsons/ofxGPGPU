@@ -65,7 +65,7 @@ void gpgpu::Process::_init(
 
   // init ping pong fbos
 
-  ofFbo::Settings s;
+  ofFbo::Settings& s = fbo_settings;
   s.internalformat = GL_RGBA32F_ARB;
   s.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
   s.minFilter = GL_NEAREST;
@@ -194,7 +194,7 @@ gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
       << "gpgpu::Process::set "
       << "data texture id "
       << "[" << id << "] "
-      << "not found (initializing...?)";
+      << "not found: initializing";
   }
 
   // copy input tex
@@ -303,6 +303,24 @@ ofTexture& gpgpu::Process::get( string id )
 
   return fbos[curfbo]
     .getTextureReference( i );
+};
+
+void gpgpu::Process::get_scaled( float scale, ofTexture& dst, string id )
+{
+  ofTexture& src = get(id);
+
+  ofFbo::Settings s = fbo_settings; //copy
+  s.width = src.getWidth() * scale;
+  s.height = src.getHeight() * scale;
+
+  ofFbo fbo;
+  fbo.allocate(s);
+  fbo.begin();
+  ofClear(0,255);
+  src.draw(0,0,s.width,s.height);
+  fbo.end();
+
+  dst = fbo.getTextureReference(); //copy
 };
 
 float* gpgpu::Process::get_data( string id )
