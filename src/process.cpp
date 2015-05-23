@@ -1,7 +1,9 @@
 
 #include "process.h"
 
-void gpgpu::Process::init(
+string gpgpu::Process::g_watch = "local";
+
+gpgpu::Process& gpgpu::Process::init(
     gpgpu::Shader* shader, 
     int _width, int _height )
 {
@@ -11,41 +13,39 @@ void gpgpu::Process::init(
   of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->fragment() );
   of_shader.linkProgram();
 
-  _init( _width, _height, shader->backbuffers() );
+  return _init( _width, _height, shader->backbuffers() );
 };
 
-void gpgpu::Process::init(
+gpgpu::Process& gpgpu::Process::init(
     string frag_file, 
-    int _width, int _height ,bool _watch)
+    int _width, int _height )
 {
-  vector<string> backbuffers;
-  watch = _watch;
-  file_path = frag_file;
-  init( frag_file, _width, _height, backbuffers );
+  vector<string> backbuffers; 
+  return init( frag_file, _width, _height, backbuffers );
 };
 
-void gpgpu::Process::init(
+gpgpu::Process& gpgpu::Process::init(
     string frag_file, 
     int _width, int _height, 
     string backbuffer )
 {
   vector<string> backbuffers;
   backbuffers.push_back( backbuffer );
-  init( frag_file, _width, _height, backbuffers );
+  return init( frag_file, _width, _height, backbuffers );
 };
 
-void gpgpu::Process::init(
+gpgpu::Process& gpgpu::Process::init(
     string frag_file, 
     int _width, int _height, 
     vector<string> backbuffers )
 {
   _name = frag_file;
+  file_path = frag_file;
   of_shader.load( "", frag_file );
-  file_current_hash = file_hash();
-  _init( _width, _height, backbuffers );
+  return _init( _width, _height, backbuffers );
 };
 
-void gpgpu::Process::_init(
+gpgpu::Process& gpgpu::Process::_init(
     int _width, int _height, 
     vector<string> backbuffers )
 {
@@ -92,9 +92,10 @@ void gpgpu::Process::_init(
 
   ofNotifyEvent( on_init,of_shader,this );
 
+  return *this;
 };
 
-void gpgpu::Process::update( int passes )
+gpgpu::Process& gpgpu::Process::update( int passes )
 {
       
   while ( passes-- > 0 )
@@ -156,21 +157,8 @@ void gpgpu::Process::update( int passes )
     curfbo = 1-curfbo;
   }
 
-  if(watch && GPGPU_WATCH){
-    if(ofGetSeconds() % 3 == 0.0){
-      if(file_change())
-      {
-        file_current_hash = file_hash();
-        of_shader.setupShaderFromFile(GL_FRAGMENT_SHADER, file_path);
-        of_shader.linkProgram();
-      }
-    }
-    if(!of_shader.isLoaded())
-    {
-      ofLogNotice() << " ofxGPGPU : Cant compile shader.\r\n";
-    }
-  }
-
+  update_watch(); 
+  return *this;
 };
 
 gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
@@ -305,8 +293,11 @@ ofTexture& gpgpu::Process::get( string id )
     .getTextureReference( i );
 };
 
-void gpgpu::Process::get_scaled( float scale, ofTexture& dst, string id )
+ofTexture gpgpu::Process::get_scaled( float scale, string id )
 {
+  if ( scale == 1.0 )
+    return get(id); //a copy
+
   ofTexture& src = get(id);
 
   ofFbo::Settings s = fbo_settings; //copy
@@ -320,7 +311,7 @@ void gpgpu::Process::get_scaled( float scale, ofTexture& dst, string id )
   src.draw(0,0,s.width,s.height);
   fbo.end();
 
-  dst = fbo.getTextureReference(); //copy
+  return fbo.getTextureReference(); //a copy
 };
 
 float* gpgpu::Process::get_data( string id )
@@ -519,43 +510,32 @@ void gpgpu::Process::log_datum( int i, int x, int y, float r, float g, float b, 
 
 //  check file update
 
-bool gpgpu::Process::file_change()
-{
-  bool ret = false;
-  if(file_current_hash != file_hash())
-  {
-    ret = true;
-  }
-  return ret;
-}
-
 string gpgpu::Process::file_hash()
 {
   string ret = "";
-  string  aboluste_path = ofFilePath::getAbsolutePath(file_path,true);
-  
+  string aboluste_path = ofFilePath::getAbsolutePath(file_path,true);
+
   unsigned char c[MD5_DIGEST_LENGTH];
   int i;
   FILE *inFile = fopen (aboluste_path.c_str(), "rb");
   MD5_CTX mdContext;
   int bytes;
   unsigned char data[1024];
-  
-  if(inFile != NULL){
-    
+
+  if ( inFile != NULL )
+  {
     MD5_Init (&mdContext);
     while ((bytes = fread (data, 1, 1024, inFile)) != 0)
       MD5_Update (&mdContext, data, bytes);
     MD5_Final (c,&mdContext);
-    for(i = 0; i < MD5_DIGEST_LENGTH; i++)
+    for( i = 0; i < MD5_DIGEST_LENGTH; i++ )
     {
-      ret+=(ofToHex(c[i]));
+      ret += ofToHex(c[i]);
     }
     fclose (inFile);
   }
-  
+
   inFile = NULL;
-  
   return ret;
 }
 
@@ -602,6 +582,36 @@ bool gpgpu::Process::is_input_tex( string id )
 bool gpgpu::Process::is_backbuffer( string id )
 {
   return get_bbuf_idx( id ) > -1;
+}
+
+void gpgpu::Process::watch( bool w )
+{ 
+  _watch = w; 
+  file_current_hash = file_hash();
+};
+
+void gpgpu::Process::update_watch()
+{
+  if ( g_watch == "none" 
+    || (g_watch == "local" && !_watch) )
+    return;
+
+  //watch!
+  if ( ofGetSeconds() % 3 == 0.0 )
+  {
+    string hash = file_hash();
+    if ( file_current_hash != hash )
+    {
+      file_current_hash = hash;
+      of_shader.setupShaderFromFile(GL_FRAGMENT_SHADER, file_path);
+      of_shader.linkProgram();
+    }
+  }
+
+  if ( !of_shader.isLoaded() )
+  {
+    ofLogNotice() << " ofxGPGPU : Cant compile shader.\r\n";
+  }
 }
 
 void gpgpu::Process::quad( float x, float y, float _width, float _height, float s, float t )
