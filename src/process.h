@@ -44,6 +44,26 @@ namespace gpgpu
 
       ofTexture& get( string id = "" );
       ofTexture get_scaled( float scale, string id = "" );
+      ofTexture get_scaled( int width, int height, string id = "" );
+
+      //TODO
+      //Process& debug()
+      //{
+        //if (!_debug_inited)
+        //{
+          //string code = transform frag_file|shader
+          //_debug.init( code, _width, _height );
+          //_debug_inited = true;
+        //}
+        //_debug
+          //.set( "_debug", get() )
+          //.update();
+        //return *this;
+      //};
+      //Process& get_debug( string id = "" )
+      //{
+        //return _debug.get(id);
+      //}
 
       //try to avoid this one
       //though useful

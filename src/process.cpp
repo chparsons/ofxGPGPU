@@ -293,6 +293,12 @@ ofTexture& gpgpu::Process::get( string id )
     .getTextureReference( i );
 };
 
+ofTexture gpgpu::Process::get_scaled( int w, int h, string id )
+{
+  float scale = (float)w / _width;
+  return get_scaled( scale, id );
+};
+
 ofTexture gpgpu::Process::get_scaled( float scale, string id )
 {
   if ( scale == 1.0 )

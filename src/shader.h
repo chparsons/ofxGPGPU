@@ -3,7 +3,7 @@
 #include "ofxGPGPU.h"
 #include "ofShader.h"
 
-#define STRINGIFY(x) #x
+#define xstr(x) #x
 
 namespace gpgpu
 {
@@ -16,7 +16,7 @@ namespace gpgpu
       virtual vector<string> backbuffers()
       {
         vector<string> backbuffer;
-        backbuffer.push_back("data");
+        //backbuffer.push_back("data");
         return backbuffer;
       };
 
