@@ -15,12 +15,17 @@ namespace gpgpu
       Process()
       {
         shader = NULL;
+        file_path = "";
+        _debug = NULL;
       };
-      ~Process(){};
+      ~Process()
+      {
+        delete _debug;
+      };
 
       Process& init(
           gpgpu::Shader* shader, 
-          int _width, int _height );
+          int _width, int _height ); 
 
       Process& init(
           string frag_file, 
@@ -46,24 +51,9 @@ namespace gpgpu
       ofTexture get_scaled( float scale, string id = "" );
       ofTexture get_scaled( int width, int height, string id = "" );
 
-      //TODO
-      //Process& debug()
-      //{
-        //if (!_debug_inited)
-        //{
-          //string code = transform frag_file|shader
-          //_debug.init( code, _width, _height );
-          //_debug_inited = true;
-        //}
-        //_debug
-          //.set( "_debug", get() )
-          //.update();
-        //return *this;
-      //};
-      //Process& get_debug( string id = "" )
-      //{
-        //return _debug.get(id);
-      //}
+      //FIXME throws Reference to non static member function must be called
+      void debug_update();
+      Process& debug();
 
       //try to avoid this one
       //though useful
@@ -155,6 +145,9 @@ namespace gpgpu
       string file_path;
       string file_current_hash;
       string file_hash();
+
+      Process* _debug;
+      void _debug_init();
   };
 
 };

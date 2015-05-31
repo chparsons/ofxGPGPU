@@ -9,10 +9,8 @@ gpgpu::Process& gpgpu::Process::init(
 {
   this->shader = shader;
   _name = typeid(shader).name();
-
   of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->fragment() );
   of_shader.linkProgram();
-
   return _init( _width, _height, shader->backbuffers() );
 };
 
@@ -649,5 +647,62 @@ void gpgpu::Process::quad( float x, float y, float _width, float _height, float 
 
   glEnd();
 
+};
+
+void gpgpu::Process::debug_update()
+{
+  _debug_init();
+  _debug->set( "debug_input", get() );
+  _debug->update();
+};
+
+gpgpu::Process& gpgpu::Process::debug()
+{
+  return *_debug;
+};
+
+void gpgpu::Process::_debug_init()
+{
+  if ( _debug != NULL )
+    return;
+
+  _debug = new Process();
+
+  string filename = file_path;
+  GLenum type = GL_FRAGMENT_SHADER;
+
+  if ( filename.empty() )
+  {
+    ofLogError("gpgpu::Process") << "_debug_init(): couldn't init code from empty fragment filename";
+    return;
+  }
+
+  //see ofShader::setupShaderFromFile(GLenum type, string filename)
+  ofBuffer buffer = ofBufferFromFile(filename);
+  // we need to make absolutely sure to have an absolute path here, so that any #includes
+  // within the shader files have a root directory to traverse from.
+  string absoluteFilePath = ofFilePath::getAbsolutePath(filename, true);
+  string sourceDirectoryPath = ofFilePath::getEnclosingDirectory(absoluteFilePath,false);
+  if ( !buffer.size() ) 
+  {
+    ofLogError("gpgpu::Process") << "_debug_init(): couldn't load shader from \""<<filename<<"\"";
+    return;
+  } 
+
+  string frag_code = buffer.getText();
+  ofStringReplace(frag_code, "void main", "void __main__");
+  ofStringReplace(frag_code, "void debug", "void main");
+  ofLogNotice("gpgpu::Process") << "init debug process" 
+    << " frag_code: \n\n" 
+    << " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
+    << frag_code
+    << " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
+
+  _debug->_name = "debug";
+  _debug->of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, frag_code, sourceDirectoryPath );
+  _debug->of_shader.linkProgram();
+
+  vector<string> backbuffers; 
+  _debug->_init( _width, _height, backbuffers );
 };
 
