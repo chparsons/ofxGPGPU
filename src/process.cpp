@@ -667,7 +667,7 @@ gpgpu::Process& gpgpu::Process::get_debug()
   return *_debug;
 };
 
-void gpgpu::Process::init_debug( string frag_file_d )
+void gpgpu::Process::set_debug( string frag_file_d )
 {
   if ( _debug != NULL )
     return;

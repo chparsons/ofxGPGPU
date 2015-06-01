@@ -53,7 +53,7 @@ namespace gpgpu
       ofTexture get_scaled( int width, int height, string id = "" );
 
       Process& get_debug();
-      void init_debug( string frag_file_d );
+      void set_debug( string frag_file_d );
 
       //try to avoid this one
       //though useful
