@@ -9,8 +9,17 @@ gpgpu::Process& gpgpu::Process::init(
 {
   this->shader = shader;
   _name = typeid(shader).name();
-  of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->fragment() );
-  of_shader.linkProgram();
+
+  if ( ! of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, shader->fragment() ) )
+    ofLogError("gpgpu::Process") 
+      << "[" << _name << "]: "
+      << "shader failed to compile";
+
+  if ( ! of_shader.linkProgram() )
+    ofLogError("gpgpu::Process") 
+      << "[" << _name << "]: "
+      << "shader failed to link";
+
   return _init( _width, _height, shader->backbuffers() );
 };
 
@@ -39,7 +48,10 @@ gpgpu::Process& gpgpu::Process::init(
 {
   _name = frag_file;
   file_path = frag_file;
-  of_shader.load( "", frag_file );
+  if ( ! of_shader.load( "", frag_file ) )
+    ofLogError("gpgpu::Process") 
+      << "[" << _name << "]: "
+      << "shader failed to load";
   return _init( _width, _height, backbuffers );
 };
 
@@ -243,9 +255,8 @@ void gpgpu::Process::set_data_tex( ofTexture& tex, vector<float>& data, string i
 
   if ( data.size() != _size )
   {
-    ofLogError() 
-      << "[" << _name << "] "
-      << "gpgpu::Process "
+    ofLogError("gpgpu::Process") 
+      << "[" << _name << "]: "
       << "set data texture "
       << "[" << id << "] "
       << "data size is (" << data.size() << ") "
@@ -597,7 +608,8 @@ void gpgpu::Process::watch( bool w )
 void gpgpu::Process::update_watch()
 {
   if ( g_watch == "none" 
-    || (g_watch == "local" && !_watch) )
+    || (g_watch == "local" && !_watch) 
+    || file_path.empty() )
     return;
 
   //watch!
@@ -649,23 +661,24 @@ void gpgpu::Process::quad( float x, float y, float _width, float _height, float 
 
 };
 
-void gpgpu::Process::debug_update()
+gpgpu::Process& gpgpu::Process::get_debug()
 {
-  _debug_init();
-  _debug->set( "debug_input", get() );
-  _debug->update();
-};
-
-gpgpu::Process& gpgpu::Process::debug()
-{
+  _debug_init_from_code();
   return *_debug;
 };
 
-void gpgpu::Process::_debug_init()
+void gpgpu::Process::init_debug( string frag_file_d )
 {
   if ( _debug != NULL )
     return;
+  _debug = new Process();
+  _debug->init( frag_file_d, _width, _height );
+};
 
+void gpgpu::Process::_debug_init_from_code()
+{
+  if ( _debug != NULL )
+    return;
   _debug = new Process();
 
   string filename = file_path;
@@ -673,7 +686,10 @@ void gpgpu::Process::_debug_init()
 
   if ( filename.empty() )
   {
-    ofLogError("gpgpu::Process") << "_debug_init(): couldn't init code from empty fragment filename";
+    ofLogError("gpgpu::Process") 
+      << "[" << _name << "]: "
+      << "_debug_init_from_code(): "
+      << "couldn't init code from empty fragment filename";
     return;
   }
 
@@ -685,22 +701,50 @@ void gpgpu::Process::_debug_init()
   string sourceDirectoryPath = ofFilePath::getEnclosingDirectory(absoluteFilePath,false);
   if ( !buffer.size() ) 
   {
-    ofLogError("gpgpu::Process") << "_debug_init(): couldn't load shader from \""<<filename<<"\"";
+    ofLogError("gpgpu::Process") 
+      << "_debug_init_from_code(): "
+      << "couldn't load shader from \""<<filename<<"\"";
     return;
   } 
 
-  string frag_code = buffer.getText();
-  ofStringReplace(frag_code, "void main", "void __main__");
-  ofStringReplace(frag_code, "void debug", "void main");
-  ofLogNotice("gpgpu::Process") << "init debug process" 
-    << " frag_code: \n\n" 
-    << " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
-    << frag_code
-    << " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
+  _debug->_name = _name+"_debug";
 
-  _debug->_name = "debug";
-  _debug->of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, frag_code, sourceDirectoryPath );
-  _debug->of_shader.linkProgram();
+  string frag_code = buffer.getText();
+  bool debug_enabled = ofIsStringInString(frag_code, "void __debug__");
+  if ( !debug_enabled)
+  {
+    ofLogError("gpgpu::Process") 
+      << "[" << _debug->_name << "]: "
+      << "_debug_init_from_code(): "
+      << "fragment code does not contain a \"void __debug__()\" function to parse";
+    return;
+  }
+
+  ofStringReplace(frag_code, "void main", "void __main__");
+  ofStringReplace(frag_code, "void __debug__", "void main");
+  //ofLogNotice("gpgpu::Process") << "init debug process" 
+    //<< " frag_code: \n\n" 
+    //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
+    //<< frag_code
+    //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
+
+  if ( ! _debug->of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, frag_code, sourceDirectoryPath ) )
+    ofLogError("gpgpu::Process") 
+      << "[" << _debug->_name << "]: "
+      << "_debug_init_from_code(): "
+      << "shader failed to compile";
+
+  if ( ! _debug->of_shader.linkProgram() )
+    ofLogError("gpgpu::Process") 
+      << "[" << _debug->_name << "]: "
+      << "_debug_init_from_code(): "
+      << "shader failed to link";
+
+  //ofLogNotice("gpgpu::Process") << "init debug process ["
+    //<< _name << "] frag_code: \n\n" 
+    //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
+    //<< _debug->of_shader.getShaderSource( GL_FRAGMENT_SHADER )
+    //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
 
   vector<string> backbuffers; 
   _debug->_init( _width, _height, backbuffers );

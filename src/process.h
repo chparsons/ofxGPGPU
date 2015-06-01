@@ -18,6 +18,7 @@ namespace gpgpu
         file_path = "";
         _debug = NULL;
       };
+
       ~Process()
       {
         delete _debug;
@@ -51,9 +52,8 @@ namespace gpgpu
       ofTexture get_scaled( float scale, string id = "" );
       ofTexture get_scaled( int width, int height, string id = "" );
 
-      //FIXME throws Reference to non static member function must be called
-      void debug_update();
-      Process& debug();
+      Process& get_debug();
+      void init_debug( string frag_file_d );
 
       //try to avoid this one
       //though useful
@@ -147,7 +147,7 @@ namespace gpgpu
       string file_hash();
 
       Process* _debug;
-      void _debug_init();
+      void _debug_init_from_code();
   };
 
 };
