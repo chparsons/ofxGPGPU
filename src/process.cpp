@@ -661,6 +661,18 @@ void gpgpu::Process::quad( float x, float y, float _width, float _height, float 
 
 };
 
+gpgpu::Process& gpgpu::Process::update_debug( string id )
+{
+  return get_debug()
+    .set( id, get() )
+    .update();
+};
+
+void gpgpu::Process::draw_debug( float x, float y, float w, float h )
+{
+  get_debug().get().draw(x,y,w,h);
+};
+
 gpgpu::Process& gpgpu::Process::get_debug()
 {
   _debug_init_from_code();

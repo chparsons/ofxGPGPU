@@ -52,7 +52,8 @@ namespace gpgpu
       ofTexture get_scaled( float scale, string id = "" );
       ofTexture get_scaled( int width, int height, string id = "" );
 
-      Process& get_debug();
+      Process& update_debug( string id = "debug_input" );
+      void draw_debug( float x, float y, float w, float h );
       void set_debug( string frag_file_d );
 
       //try to avoid this one
@@ -147,6 +148,7 @@ namespace gpgpu
       string file_hash();
 
       Process* _debug;
+      Process& get_debug();
       void _debug_init_from_code();
   };
 
