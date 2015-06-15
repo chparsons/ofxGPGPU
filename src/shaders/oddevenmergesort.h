@@ -1,7 +1,6 @@
 #pragma once
 
 #include "ofxGPGPU.h"
-#include "ofShader.h"
 
 /*
  * http://http.developer.nvidia.com/GPUGems2/gpugems2_chapter46.html
@@ -12,6 +11,10 @@ namespace gpgpu
 
 class OddEvenMergeSort : public gpgpu::Shader
 {
+  private:
+    int width, height;
+    int stage, pass;
+
   public: 
 
   void init( int width, int height )
@@ -22,14 +25,27 @@ class OddEvenMergeSort : public gpgpu::Shader
     pass = 0;
   };
 
+  virtual string name()
+  {
+    return "gpgpu::OddEvenMergeSort_"+ofToString(ofGetElapsedTimeMicros());
+  };
+
+  virtual vector<string> backbuffers()
+  {
+    vector<string> backbuffer;
+    backbuffer.push_back("data");
+    return backbuffer;
+  };
+
   void update( ofShader& shader )
   { 
 
     pass--;
-    if (pass<0) {
+    if ( pass < 0 ) 
+    {
       // next stage
       stage++;
-      pass=stage;
+      pass = stage;
     }
 
     // perform one step of the current sorting algorithm
@@ -107,12 +123,7 @@ class OddEvenMergeSort : public gpgpu::Shader
     }
 
     ); //fragment code
-  };
-
-  private:
-
-  int width, height;
-  int stage, pass;
+  }; 
 
 }; //endof class
 }; //endof namespace

@@ -11,8 +11,12 @@ void ofApp::setup()
 
   ofBackground(0);
 
-  pos.init("update_pos.frag", w, h, "pos");
-  vel.init("update_vel.frag", w, h, "vel");
+  pos
+    .add_backbuffer( "pos" )
+    .init("update_pos.frag", w, h);
+  vel
+    .add_backbuffer( "vel" )
+    .init("update_vel.frag", w, h);
 
   float* _pos = new float[w * h * 4];
   for (unsigned y = 0; y < h; ++y)

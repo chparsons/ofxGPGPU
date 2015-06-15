@@ -1,9 +1,6 @@
 #pragma once
 
 #include "ofxGPGPU.h"
-#include "ofShader.h"
-
-#define xstr(x) #x
 
 namespace gpgpu
 {
@@ -12,15 +9,16 @@ namespace gpgpu
     public: 
 
       virtual string fragment() = 0;
+      virtual string name() = 0;
+
+      virtual void update( ofShader& shader ){};
 
       virtual vector<string> backbuffers()
       {
         vector<string> backbuffer;
-        //backbuffer.push_back("data");
         return backbuffer;
       };
 
-      virtual void update( ofShader& shader ){};
   };
 };
  

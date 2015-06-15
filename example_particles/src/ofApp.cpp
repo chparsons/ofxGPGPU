@@ -11,10 +11,10 @@ void ofApp::setup()
 
   ofBackground(0);
 
-  vector<string> backbuffers;
-  backbuffers.push_back("pos");
-  backbuffers.push_back("vel");
-  particles.init("update.frag", w, h, backbuffers);
+  particles
+    .add_backbuffer("pos")
+    .add_backbuffer("vel")
+    .init("update.frag", w, h);
 
   float* _pos = new float[w * h * 4];
   for (unsigned y = 0; y < h; ++y)

@@ -32,16 +32,6 @@ namespace gpgpu
           string frag_file, 
           int _width, int _height );
 
-      Process& init(
-          string frag_file, 
-          int _width, int _height, 
-          vector<string> backbuffers );
-
-      Process& init(
-          string frag_file, 
-          int _width, int _height, 
-          string backbuffer );
-
       Process& update( int passes = 1 );
 
       Process& set( string id, ofTexture& data );
@@ -51,6 +41,10 @@ namespace gpgpu
       ofTexture& get( string id = "" );
       ofTexture get_scaled( float scale, string id = "" );
       ofTexture get_scaled( int width, int height, string id = "" );
+
+      //always add or set backbuffers before calling init
+      Process& add_backbuffer( string id );
+      Process& add_backbuffers( vector<string> bbuffs );
 
       Process& update_debug( string id = "debug_input" );
       void draw_debug( float x, float y, float w, float h );
@@ -106,8 +100,9 @@ namespace gpgpu
 
       ofFbo fbos[2];
       ofFbo::Settings fbo_settings;
-      map<string,ofTexture> input_texs;
-      //map<string,ofFbo> input_texs;
+      map<string,ofTexture> inputs;
+      map<string,ofTexture> inputs_backbuffers;
+      //map<string,ofFbo> inputs;
       //void init_input_tex( string id );
 
       ofShader of_shader;
@@ -117,21 +112,21 @@ namespace gpgpu
 
       gpgpu::Shader* shader; 
 
-      Process& _init(
-          int _width, int _height, 
-          vector<string> backbuffers );
+      Process& _init( int _width, int _height );
 
       void set_bbuf_data( string id, vector<float>& data );
-      void set_data_tex( ofTexture& tex, vector<float>& data, string id );
+      void set_tex_data( ofTexture& tex, vector<float>& data, string id );
 
       void init_bbuf( string id );
       bool check_bbuf( int i, string id );
+      bool check_input_bbuf(ofTexture& input_data);
 
-      int get_bbuf_idx( string id );
-      int get_pix_idx( int x, int y );
+      int bbuf_idx( string id );
+      int pix_idx( int x, int y );
       //int get_tex_idx( string id );
 
-      bool is_input_tex( string id );
+      bool is_input( string id );
+      bool is_input_backbuffer( string id );
       bool is_backbuffer( string id );
 
       void quad( float x, float y, float _width, float _height, float s, float t );
