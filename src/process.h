@@ -119,7 +119,7 @@ namespace gpgpu
 
       void init_bbuf( string id );
       bool check_bbuf( int i, string id );
-      bool check_input_bbuf(ofTexture& input_data);
+      //bool check_input_bbuf(ofTexture& input_data);
 
       int bbuf_idx( string id );
       int pix_idx( int x, int y );
@@ -130,6 +130,10 @@ namespace gpgpu
       bool is_backbuffer( string id );
 
       void quad( float x, float y, float _width, float _height, float s, float t );
+
+      float get_scale( ofTexture& data );
+      ofTexture get_scaled_tex( ofTexture& src, float scale );
+      ofTexture get_scaled_tex( ofTexture& src, int width, int height );
 
       void log_datum( int i, int x, int y, float r, float g, float b, float a ); 
 

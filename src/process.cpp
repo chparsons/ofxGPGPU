@@ -184,19 +184,20 @@ gpgpu::Process& gpgpu::Process::update( int passes )
 
 gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
 {  
+  float scale = get_scale( data );
 
   if ( is_backbuffer( id ) ) 
   {
-    check_input_bbuf( data );
-    inputs_backbuffers[id] = data;
+    //check_input_bbuf( data );
+    inputs_backbuffers[id] = scale == 1.0 ? data : get_scaled_tex( data, scale );
     backbuffers.erase( backbuffers.begin() + bbuf_idx(id) );
     //backbuffers.erase( std::remove( backbuffers.begin(), backbuffers.end(), id ), backbuffers.end() );
   }
 
   else if ( is_input_backbuffer( id ) ) 
   {
-    check_input_bbuf( data );
-    inputs_backbuffers[id] = data;
+    //check_input_bbuf( data );
+    inputs_backbuffers[id] = scale == 1.0 ? data : get_scaled_tex( data, scale );
   }
 
   else
@@ -316,16 +317,23 @@ ofTexture& gpgpu::Process::get( string id )
 
 ofTexture gpgpu::Process::get_scaled( int w, int h, string id )
 {
-  float scale = (float)w / _width;
-  return get_scaled( scale, id );
+  return get_scaled( (float)w/_width, id );
 };
 
 ofTexture gpgpu::Process::get_scaled( float scale, string id )
 {
-  if ( scale == 1.0 )
-    return get(id); //a copy
+  return get_scaled_tex( get(id), scale );
+};
 
-  ofTexture& src = get(id);
+ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, int w, int h )
+{
+  return get_scaled_tex( src, (float)w/_width );
+};
+
+ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
+{
+  if ( scale == 1.0 )
+    return src; //a copy
 
   ofFbo::Settings s = fbo_settings; //copy
   s.width = src.getWidth() * scale;
@@ -339,6 +347,11 @@ ofTexture gpgpu::Process::get_scaled( float scale, string id )
   fbo.end();
 
   return fbo.getTextureReference(); //a copy
+};
+
+float gpgpu::Process::get_scale( ofTexture& data )
+{
+  return (float)data.getWidth() / _width;
 };
 
 float* gpgpu::Process::get_data( string id )
@@ -452,21 +465,21 @@ bool gpgpu::Process::check_bbuf( int i, string id )
   return true;
 };
 
-bool gpgpu::Process::check_input_bbuf( ofTexture& input_data )
-{
-  if ( input_data.getWidth() != _width || input_data.getHeight() != _height )
-  {
-    ofLogWarning("gpgpu::Process")
-      << _name << " size:"
-      << " [" << _width << "," << _height << "]"
-      << " and input backbuffer data tex size:"
-      << " [" << input_data.getWidth() 
-      << "," << input_data.getHeight() << "]"
-      << " do not match";
-    return false;
-  }
-  return true;
-};
+//bool gpgpu::Process::check_input_bbuf( ofTexture& input_data )
+//{
+  //if ( input_data.getWidth() != _width || input_data.getHeight() != _height )
+  //{
+    //ofLogWarning("gpgpu::Process")
+      //<< _name << " size:"
+      //<< " [" << _width << "," << _height << "]"
+      //<< " and input backbuffer data tex size:"
+      //<< " [" << input_data.getWidth() 
+      //<< "," << input_data.getHeight() << "]"
+      //<< " do not match";
+    //return false;
+  //}
+  //return true;
+//};
 
 // input tex as fbo
 //void gpgpu::Process::init_input_tex( string id )
