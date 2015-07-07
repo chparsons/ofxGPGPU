@@ -38,7 +38,6 @@ class Gaussian : public gpgpu::Shader
     void update( ofShader& shader )
     {
       if (++pass > 1.) pass = 0.;
-      //cout << "gaussian shader update, pass " << pass << endl;
       shader.setUniform1i( "pass", pass ); 
     }; 
 

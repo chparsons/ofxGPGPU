@@ -489,17 +489,7 @@ bool gpgpu::Process::check_bbuf( int i, string id )
   //if ( fbo.isAllocated() )
     //return;
 
-  //ofFbo::Settings s;
-  //s.internalformat = GL_RGBA32F_ARB;
-  //s.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
-  //s.minFilter = GL_NEAREST;
-  //s.maxFilter = GL_NEAREST;
-  //s.wrapModeHorizontal = GL_CLAMP;
-  //s.wrapModeVertical = GL_CLAMP;
-  //s.width = _width;
-  //s.height = _height;
-  //s.numColorbuffers = 1;
-
+  //ofFbo::Settings s = fbo_settings; //copy
   //fbo.allocate(s);
   //fbo.begin();
   //ofClear(0,255);
