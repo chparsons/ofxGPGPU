@@ -11,7 +11,7 @@ namespace gpgpu
       virtual string fragment() = 0;
       virtual string name() = 0;
 
-      virtual void update( ofShader& shader ){};
+      virtual void update( ofShader& shader, int pass ){};
 
       virtual vector<string> backbuffers()
       {

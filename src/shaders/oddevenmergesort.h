@@ -37,7 +37,7 @@ class OddEvenMergeSort : public gpgpu::Shader
     return backbuffer;
   };
 
-  void update( ofShader& shader )
+  void update( ofShader& shader, int _pass )
   { 
 
     pass--;

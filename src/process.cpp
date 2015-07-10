@@ -20,7 +20,7 @@ gpgpu::Process& gpgpu::Process::init(
       << "[" << _name << "]: "
       << "shader failed to link";
 
-  add_backbuffers(shader->backbuffers());
+  add_backbuffers( shader->backbuffers() );
   return _init( _width, _height );
 };
 
@@ -110,24 +110,27 @@ gpgpu::Process& gpgpu::Process::update( int passes )
     ofNotifyEvent( on_update, of_shader, this );
 
     if ( shader != NULL )
-      shader->update( of_shader );
+      shader->update( of_shader, pass );
 
     // pass some default uniforms
-    of_shader.setUniform2f("size",_width,_height);
+    of_shader.setUniform2f( "size", _width, _height );
+    of_shader.setUniform1i( "pass", pass );
 
     // set data textures
     int tex_i = 0;
     int bbuf_i = 0;
 
     // backbuffers
-    int nbbufs = backbuffers.size(); 
-    for (int i = 0; i < nbbufs; i++)
+    if ( pass > 0 ) 
     {
-      of_shader.setUniformTexture( 
-        backbuffers[i], 
-        read->getTextureReference(bbuf_i),
-        tex_i++ );
-      bbuf_i++;
+      int nbbufs = backbuffers.size(); 
+      for (int i = 0; i < nbbufs; i++)
+      {
+        of_shader.setUniformTexture( 
+          backbuffers[i], 
+          read->getTextureReference( bbuf_i++ ),
+          tex_i++ );
+      }
     }
 
     // input textures with backbuffer 
@@ -135,7 +138,7 @@ gpgpu::Process& gpgpu::Process::update( int passes )
     for ( map<string,ofTexture>::iterator it = inputs_backbuffers.begin(); it != inputs_backbuffers.end(); it++ )
     {
 
-      if (pass == 0) 
+      if ( pass == 0 ) 
       {
         of_shader.setUniformTexture( 
           it->first, 
@@ -147,9 +150,8 @@ gpgpu::Process& gpgpu::Process::update( int passes )
       {
         of_shader.setUniformTexture( 
           it->first, 
-          read->getTextureReference(bbuf_i),
+          read->getTextureReference( bbuf_i++ ),
           tex_i++ );
-        bbuf_i++; 
       }
     }
 
@@ -188,15 +190,12 @@ gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
 
   if ( is_backbuffer( id ) ) 
   {
-    //check_input_bbuf( data );
     inputs_backbuffers[id] = scale == 1.0 ? data : get_scaled_tex( data, scale );
     backbuffers.erase( backbuffers.begin() + bbuf_idx(id) );
-    //backbuffers.erase( std::remove( backbuffers.begin(), backbuffers.end(), id ), backbuffers.end() );
   }
 
   else if ( is_input_backbuffer( id ) ) 
   {
-    //check_input_bbuf( data );
     inputs_backbuffers[id] = scale == 1.0 ? data : get_scaled_tex( data, scale );
   }
 
@@ -232,16 +231,16 @@ gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
     set_bbuf_data( id, data );
   }
 
+  else if ( is_input_backbuffer( id ) )
+  {
+    set_tex_data( inputs_backbuffers[id], data, id );
+  }
+
   else if ( is_input( id ) )
   {
     set_tex_data( inputs[id], data, id ); 
     //set_tex_data( inputs[id].getTextureReference(), data, id ); 
-  }
-
-  else if ( is_input_backbuffer( id ) )
-  {
-    set_tex_data(inputs_backbuffers[id], data, id); 
-  }
+  } 
 
   else
   {

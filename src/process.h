@@ -85,8 +85,19 @@ namespace gpgpu
       void log( string id = "" );
       void log_config();
 
-      ofEvent<ofShader> on_init;
-      ofEvent<ofShader> on_update;
+      template <class ListenerClass>
+      Process& on( string type, ListenerClass* listener, void (ListenerClass::*method)(ofShader&) )
+      {
+        ofAddListener( event(type), listener, method );
+        return *this;
+      }; 
+
+      template <class ListenerClass>
+      Process& off( string type, ListenerClass* listener, void (ListenerClass::*method)(ofShader&) )
+      {
+        ofRemoveListener( event(type), listener, method );
+        return *this;
+      }; 
 
     private:
 
@@ -149,6 +160,16 @@ namespace gpgpu
       Process* _debug;
       Process& get_debug();
       void _debug_init_from_code();
+
+      ofEvent<ofShader> on_init;
+      ofEvent<ofShader> on_update;
+      ofEvent<ofShader>& event( string type )
+      {
+        if ( type == "update" ) 
+          return on_update;
+        else if ( type == "init" ) 
+          return on_init;
+      };
   };
 
 };

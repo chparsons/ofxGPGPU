@@ -14,14 +14,8 @@ namespace gpgpu
 class Gaussian : public gpgpu::Shader
 {
   private:
-    float pass;
 
   public: 
-
-    Gaussian()
-    { 
-      pass = 1.;
-    };
 
     virtual string name()
     {
@@ -35,10 +29,9 @@ class Gaussian : public gpgpu::Shader
       return backbuffer;
     };
 
-    void update( ofShader& shader )
+    void update( ofShader& shader, int pass )
     {
-      if (++pass > 1.) pass = 0.;
-      shader.setUniform1i( "pass", pass ); 
+      shader.setUniform1i( "gpass", (float)(pass%2) ); 
     }; 
 
     string fragment()
@@ -46,10 +39,11 @@ class Gaussian : public gpgpu::Shader
       return "#version 120 \n #extension GL_ARB_texture_rectangle : enable \n #extension GL_EXT_gpu_shader4 : enable \n" xstr(
 
       uniform vec2 size;
+      uniform int pass;
 
       uniform sampler2DRect data; // source image
 
-      uniform int pass;
+      uniform int gpass;
       uniform float sigma;
       uniform int kernel;
 
@@ -59,7 +53,7 @@ class Gaussian : public gpgpu::Shader
 
       void main()
       {
-        dir = vec2( pass, 1.-pass );
+        dir = vec2( gpass, 1.-gpass );
 
         float norm = 1.0 / ( sqrt ( 2.0 * PI ) * sigma );
 
@@ -73,8 +67,8 @@ class Gaussian : public gpgpu::Shader
         for ( int i = 1; i <= kernel; i++ ) 
         {
           float coeff = exp(-0.5 * float(i) * float(i) / (sigma * sigma));
-          acc += (texture2DRect( data, loc - float(i) * dir) ) * coeff; //L
-          acc += (texture2DRect( data, loc + float(i) * dir) ) * coeff; //R
+          acc += ( texture2DRect( data, loc - float(i) * dir) ) * coeff; //L
+          acc += ( texture2DRect( data, loc + float(i) * dir) ) * coeff; //R
         }
 
         acc *= norm; // normalize for unity gain
@@ -93,7 +87,7 @@ class Gaussian : public gpgpu::Shader
     //{
       //return "#version 120\n #extension GL_ARB_texture_rectangle : enable\n #extension GL_EXT_gpu_shader4 : enable\n" xstr(
 
-      //uniform int pass;
+      //uniform int gpass;
 
       //uniform float sigma; 
       ////gaussian sigma: higher value means more blur
