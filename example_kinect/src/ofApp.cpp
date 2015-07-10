@@ -30,8 +30,9 @@ void ofApp::setup(){
 
   test.init( "glsl/test.frag", w, h );
 
-  p3d.init("glsl/kinect_unproject.frag",w,h);
-  ofAddListener( p3d.on_update, this, &ofApp::p3d_update );
+  p3d
+    .init("glsl/kinect_unproject.frag",w,h)
+    .on( "update", this, &ofApp::p3d_update );
 
   normals.init("glsl/normals.frag",w,h);
   normals_vis.init("glsl/normals_vis.frag",w,h);

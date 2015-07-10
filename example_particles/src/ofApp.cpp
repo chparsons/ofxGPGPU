@@ -14,7 +14,8 @@ void ofApp::setup()
   particles
     .add_backbuffer("pos")
     .add_backbuffer("vel")
-    .init("update.frag", w, h);
+    .init("update.frag", w, h)
+    .on("update", this, &ofApp::process_update);
 
   float* _pos = new float[w * h * 4];
   for (unsigned y = 0; y < h; ++y)
@@ -34,8 +35,6 @@ void ofApp::setup()
   particles.set("pos", _pos);
 
   delete[] _pos;
-
-  ofAddListener(particles.on_update, this, &ofApp::process_update);
 
   // mesh
   mesh.clear();

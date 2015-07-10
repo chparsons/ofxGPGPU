@@ -13,10 +13,13 @@ void ofApp::setup()
 
   pos
     .add_backbuffer( "pos" )
-    .init("update_pos.frag", w, h);
+    .init("update_pos.frag", w, h)
+    .on("update", this, &ofApp::pos_update);
+
   vel
     .add_backbuffer( "vel" )
-    .init("update_vel.frag", w, h);
+    .init("update_vel.frag", w, h)
+    .on("update", this, &ofApp::vel_update);
 
   float* _pos = new float[w * h * 4];
   for (unsigned y = 0; y < h; ++y)
@@ -37,10 +40,7 @@ void ofApp::setup()
   vel.set("pos", pos.get("pos"));
   pos.set("vel", vel.get("vel"));
 
-  delete[] _pos;
-
-  ofAddListener(pos.on_update, this, &ofApp::pos_update);
-  ofAddListener(vel.on_update, this, &ofApp::vel_update);
+  delete[] _pos; 
 
   // mesh
   mesh.clear();
