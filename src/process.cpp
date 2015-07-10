@@ -121,16 +121,13 @@ gpgpu::Process& gpgpu::Process::update( int passes )
     int bbuf_i = 0;
 
     // backbuffers
-    if ( pass > 0 ) 
+    int nbbufs = backbuffers.size(); 
+    for (int i = 0; i < nbbufs; i++)
     {
-      int nbbufs = backbuffers.size(); 
-      for (int i = 0; i < nbbufs; i++)
-      {
-        of_shader.setUniformTexture( 
-          backbuffers[i], 
-          read->getTextureReference( bbuf_i++ ),
-          tex_i++ );
-      }
+      of_shader.setUniformTexture( 
+        backbuffers[i], 
+        read->getTextureReference( bbuf_i++ ),
+        tex_i++ );
     }
 
     // input textures with backbuffer 
