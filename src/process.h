@@ -17,6 +17,7 @@ namespace gpgpu
         shader = NULL;
         file_path = "";
         _debug = NULL;
+        _inited = false;
       };
 
       ~Process()
@@ -42,7 +43,6 @@ namespace gpgpu
       ofTexture get_scaled( float scale, string id = "" );
       ofTexture get_scaled( int width, int height, string id = "" );
 
-      //always add or set backbuffers before calling init
       Process& add_backbuffer( string id );
       Process& add_backbuffers( vector<string> bbuffs );
 
@@ -105,6 +105,7 @@ namespace gpgpu
 
       int _width, _height;
       int _size;
+      bool _inited;
       int channels;
       int curfbo;
       string _name;
@@ -112,7 +113,7 @@ namespace gpgpu
       ofFbo fbos[2];
       ofFbo::Settings fbo_settings;
       map<string,ofTexture> inputs;
-      map<string,ofTexture> inputs_backbuffers;
+      //map<string,ofTexture> inputs_backbuffers;
       //map<string,ofFbo> inputs;
       //void init_input_tex( string id );
 
@@ -125,6 +126,8 @@ namespace gpgpu
 
       Process& _init( int _width, int _height );
 
+      void upload( ofFbo& fbo, ofTexture& data );
+      void upload( ofFbo& fbo, ofTexture& data, int w, int h );
       void set_bbuf_data( string id, vector<float>& data );
       void set_tex_data( ofTexture& tex, vector<float>& data, string id );
 
@@ -137,7 +140,7 @@ namespace gpgpu
       //int get_tex_idx( string id );
 
       bool is_input( string id );
-      bool is_input_backbuffer( string id );
+      //bool is_input_backbuffer( string id );
       bool is_backbuffer( string id );
 
       void quad( float x, float y, float _width, float _height, float s, float t );

@@ -48,11 +48,8 @@ gpgpu::Process& gpgpu::Process::_init(
   channels = 4; //rgba
 
   _size = _width * _height * channels;
-
   fpix.allocate(_width, _height, channels);
-
   int nbbufs = backbuffers.size();
-  int allbbufs = nbbufs + inputs_backbuffers.size();
 
   // init ping pong fbos
 
@@ -67,7 +64,7 @@ gpgpu::Process& gpgpu::Process::_init(
   s.height = _height;
   //0.8.0 bug: on ofFbo.cpp this line should be commented out
   ////settings.numColorbuffers = settings.colorFormats.size();
-  s.numColorbuffers = allbbufs > 0 ? allbbufs : 1;
+  s.numColorbuffers = nbbufs > 0 ? nbbufs : 1;
 
   for ( int i = 0; i < 2; i++ )
   {
@@ -81,7 +78,8 @@ gpgpu::Process& gpgpu::Process::_init(
   for (int i = 0; i < nbbufs; i++)
     init_bbuf( backbuffers[i] );
 
-  ofNotifyEvent( on_init,of_shader,this );
+  ofNotifyEvent( on_init, of_shader, this );
+  _inited = true;
 
   return *this;
 };
@@ -122,7 +120,7 @@ gpgpu::Process& gpgpu::Process::update( int passes )
 
     // backbuffers
     int nbbufs = backbuffers.size(); 
-    for (int i = 0; i < nbbufs; i++)
+    for ( int i = 0; i < nbbufs; i++ )
     {
       of_shader.setUniformTexture( 
         backbuffers[i], 
@@ -130,36 +128,12 @@ gpgpu::Process& gpgpu::Process::update( int passes )
         tex_i++ );
     }
 
-    // input textures with backbuffer 
-    // pass data tex on 1st pass, then the backbuff
-    for ( map<string,ofTexture>::iterator it = inputs_backbuffers.begin(); it != inputs_backbuffers.end(); it++ )
-    {
-
-      if ( pass == 0 ) 
-      {
-        of_shader.setUniformTexture( 
-          it->first, 
-          it->second, 
-          tex_i++ );       
-      }
-
-      else
-      {
-        of_shader.setUniformTexture( 
-          it->first, 
-          read->getTextureReference( bbuf_i++ ),
-          tex_i++ );
-      }
-    }
-
     // input textures
     for ( map<string,ofTexture>::iterator it = inputs.begin(); it != inputs.end(); it++ )
-    //for ( map<string,ofFbo>::iterator it = inputs.begin(); it != inputs.end(); it++ )
     {
       of_shader.setUniformTexture( 
         it->first, 
         it->second,
-        //it->second.getTextureReference(),
         tex_i++ );
     }
 
@@ -183,31 +157,16 @@ gpgpu::Process& gpgpu::Process::update( int passes )
 
 gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
 {  
-  float scale = get_scale( data );
-
-  if ( is_backbuffer( id ) ) 
+  int bbi = bbuf_idx( id );
+  if ( bbi > -1 ) 
   {
-    inputs_backbuffers[id] = scale == 1.0 ? data : get_scaled_tex( data, scale );
-    backbuffers.erase( backbuffers.begin() + bbuf_idx(id) );
-  }
-
-  else if ( is_input_backbuffer( id ) ) 
-  {
-    inputs_backbuffers[id] = scale == 1.0 ? data : get_scaled_tex( data, scale );
+    upload( fbos[curfbo], data );  
+    fbos[curfbo].getTextureReference( bbi ); //triggers updateTexture(attachmentPoint)
   }
 
   else
   {
-    // copy input tex
-    inputs[id] = data;
-
-    // input texs as fbos
-    //init_input_tex(id);
-    //inputs[id].begin();
-    //ofClear(0,255);
-    //ofSetColor(255);
-    //data.draw(0,0);
-    //inputs[id].end();
+    inputs[id] = data; // copy input tex
   }
 
   return *this;
@@ -228,15 +187,9 @@ gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
     set_bbuf_data( id, data );
   }
 
-  else if ( is_input_backbuffer( id ) )
-  {
-    set_tex_data( inputs_backbuffers[id], data, id );
-  }
-
   else if ( is_input( id ) )
   {
     set_tex_data( inputs[id], data, id ); 
-    //set_tex_data( inputs[id].getTextureReference(), data, id ); 
   } 
 
   else
@@ -254,7 +207,8 @@ gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
 void gpgpu::Process::set_bbuf_data( string id, vector<float>& data )
 {
   int i = bbuf_idx( id );
-  if ( !check_bbuf(i,id) ) return;
+  if ( !check_bbuf(i,id) ) 
+    return;
   set_tex_data( fbos[curfbo].getTextureReference( i ), data, id );
 };
 
@@ -292,62 +246,44 @@ ofTexture& gpgpu::Process::get( string id )
   // get process result
   if ( id.empty() )
   {
-    return fbos[curfbo]
-      .getTextureReference( 0 );
+    return fbos[curfbo].getTextureReference( 0 );
   }
 
-  // or an input texture
-  if ( is_input(id) )
-  {
-    return inputs[id];
-    //return inputs[id].getTextureReference();
-  }
+  // an input texture
+  //else if ( is_input(id) )
+  //{
+    //return inputs[id];
+  //}
 
   // or a backbuffer
-  int i = bbuf_idx( id );
-  check_bbuf(i,id);
-
-  return fbos[curfbo]
-    .getTextureReference( i );
+  else 
+  {
+    int i = bbuf_idx( id );
+    if ( check_bbuf(i,id) )
+    {
+      return fbos[curfbo].getTextureReference( i );
+    }
+    else
+    {
+      static ofTexture err;
+      return err;
+    }
+  }
 };
 
-ofTexture gpgpu::Process::get_scaled( int w, int h, string id )
+void gpgpu::Process::upload( ofFbo& fbo, ofTexture& data )
 {
-  return get_scaled( (float)w/_width, id );
+  float scale = get_scale( data );
+  upload( fbo, data, data.getWidth()*scale, data.getHeight()*scale );
 };
 
-ofTexture gpgpu::Process::get_scaled( float scale, string id )
+void gpgpu::Process::upload( ofFbo& fbo, ofTexture& data, int w, int h )
 {
-  return get_scaled_tex( get(id), scale );
-};
-
-ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, int w, int h )
-{
-  return get_scaled_tex( src, (float)w/_width );
-};
-
-ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
-{
-  if ( scale == 1.0 )
-    return src; //a copy
-
-  ofFbo::Settings s = fbo_settings; //copy
-  s.width = src.getWidth() * scale;
-  s.height = src.getHeight() * scale;
-
-  ofFbo fbo;
-  fbo.allocate(s);
   fbo.begin();
   ofClear(0,255);
-  src.draw(0,0,s.width,s.height);
+  ofSetColor(255);
+  data.draw( 0, 0, w, h );
   fbo.end();
-
-  return fbo.getTextureReference(); //a copy
-};
-
-float gpgpu::Process::get_scale( ofTexture& data )
-{
-  return (float)data.getWidth() / _width;
 };
 
 float* gpgpu::Process::get_data( string id )
@@ -378,42 +314,80 @@ void gpgpu::Process::read_to_fpix( string id)
     return;
   }
 
-  if ( is_input(id) )
-  {
-    inputs[id].readToPixels(fpix);
-    //inputs[id].getTextureReference().readToPixels(fpix);
-    return;
-  }
+  // an input texture
+  //else if ( is_input(id) )
+  //{
+    //inputs[id].readToPixels(fpix);
+    //return;
+  //}
 
   // or a backbuffer
-  int i = bbuf_idx( id );
-  if ( !check_bbuf(i,id) ) return NULL;
+  else 
+  {
+    int i = bbuf_idx( id );
+    if ( check_bbuf(i,id) ) 
+    {
+      fbos[curfbo]
+        .readToPixels( fpix, i );
+        //.getTextureReference( i )
+        //.readToPixels( fpix );
+    }
+    else
+    {
+      return NULL;
+    } 
+  }
+};
 
-  fbos[curfbo]
-    .readToPixels( fpix, i );
-    //.getTextureReference( i )
-    //.readToPixels( fpix );
+ofTexture gpgpu::Process::get_scaled( int w, int h, string id )
+{
+  return get_scaled( (float)w/_width, id );
+};
+
+ofTexture gpgpu::Process::get_scaled( float scale, string id )
+{
+  return get_scaled_tex( get(id), scale );
+};
+
+ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, int w, int h )
+{
+  return get_scaled_tex( src, (float)w/_width );
+};
+
+ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
+{
+  if ( scale == 1.0 )
+    return src; //a copy
+
+  ofFbo::Settings s = fbo_settings; //copy
+  s.width = src.getWidth() * scale;
+  s.height = src.getHeight() * scale;
+
+  ofFbo fbo;
+  fbo.allocate(s);
+  upload( fbo, src, s.width, s.height );
+
+  return fbo.getTextureReference(); //a copy
+};
+
+float gpgpu::Process::get_scale( ofTexture& data )
+{
+  return (float)data.getWidth() / _width;
 };
 
 gpgpu::Process& gpgpu::Process::add_backbuffer( string id )
 {
-  if ( is_input( id ) )
-  {
-    inputs_backbuffers[id] = inputs[id];
-    inputs.erase( id );
-  }
+  if ( _inited )
+    ofLogError("gpgpu::Process") 
+      << "[" << _name << "]:"
+      << " add_backbuffer [" << id << "]"
+      << " called after initialization";
 
-  else if ( is_input_backbuffer( id ) )
+  if ( is_backbuffer( id ) )
   {
     ofLogWarning("gpgpu::Process") 
-      << "add backbuffer " << id 
-      << " is already an input backbuffer";
-  }
-
-  else if ( is_backbuffer( id ) )
-  {
-    ofLogWarning("gpgpu::Process") 
-      << "add backbuffer " << id 
+      << "[" << _name << "]:"
+      << " add backbuffer [" << id << "]" 
       << " is already a backbuffer";
   }
 
@@ -437,7 +411,8 @@ void gpgpu::Process::init_bbuf( string id )
   // initial state to 0
 
   int i = bbuf_idx( id );
-  if ( !check_bbuf(i,id) ) return;
+  if ( !check_bbuf(i,id) ) 
+    return;
 
   vector<float> zeros( _size, 0.0f );
   set_bbuf_data( backbuffers[i], zeros );
@@ -460,37 +435,6 @@ bool gpgpu::Process::check_bbuf( int i, string id )
   }
   return true;
 };
-
-//bool gpgpu::Process::check_input_bbuf( ofTexture& input_data )
-//{
-  //if ( input_data.getWidth() != _width || input_data.getHeight() != _height )
-  //{
-    //ofLogWarning("gpgpu::Process")
-      //<< _name << " size:"
-      //<< " [" << _width << "," << _height << "]"
-      //<< " and input backbuffer data tex size:"
-      //<< " [" << input_data.getWidth() 
-      //<< "," << input_data.getHeight() << "]"
-      //<< " do not match";
-    //return false;
-  //}
-  //return true;
-//};
-
-// input tex as fbo
-//void gpgpu::Process::init_input_tex( string id )
-//{
-  //ofFbo& fbo = inputs[id];
-
-  //if ( fbo.isAllocated() )
-    //return;
-
-  //ofFbo::Settings s = fbo_settings; //copy
-  //fbo.allocate(s);
-  //fbo.begin();
-  //ofClear(0,255);
-  //fbo.end();
-//};
 
 int gpgpu::Process::bbuf_idx( string id )
 {
@@ -630,29 +574,10 @@ void gpgpu::Process::log_config()
   for (int i = 0; i < nbbufs; i++)
     ofLog() << "\t\t" << backbuffers[i];
 
-  ofLog() << "\t input textures with backbuffer:";
-  for ( map<string,ofTexture>::iterator it = inputs_backbuffers.begin(); it != inputs_backbuffers.end(); it++ )
-  {
-    ofTextureData& texd = it->second.getTextureData();
-    ofLog() << "\t\t" 
-      << "id: "
-      << it->first
-      << ", "
-      << "width: " << texd.tex_w
-      << ", "
-      << "height: " << texd.tex_h
-      << ", "
-      << "allocated: " << texd.bAllocated
-      << ", "
-      << "internal format: " << ofGetGlInternalFormatName(texd.glTypeInternal);
-  }
-
   ofLog() << "\t input textures:";
   for ( map<string,ofTexture>::iterator it = inputs.begin(); it != inputs.end(); it++ )
-  //for ( map<string,ofFbo>::iterator it = inputs.begin(); it != inputs.end(); it++ )
   {
     ofTextureData& texd = it->second.getTextureData();
-    //ofTextureData& texd = it->second.getTextureReference().getTextureData();
     ofLog() << "\t\t" 
       << "id: "
       << it->first
@@ -671,11 +596,6 @@ void gpgpu::Process::log_config()
 bool gpgpu::Process::is_input( string id )
 {
   return inputs.find( id ) != inputs.end();
-};
-
-bool gpgpu::Process::is_input_backbuffer( string id )
-{
-  return inputs_backbuffers.find( id ) != inputs_backbuffers.end();
 };
 
 bool gpgpu::Process::is_backbuffer( string id )
