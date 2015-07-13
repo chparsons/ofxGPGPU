@@ -160,7 +160,7 @@ gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
   int bbi = bbuf_idx( id );
   if ( bbi > -1 ) 
   {
-    upload( fbos[curfbo], data );  
+    copy( data, fbos[curfbo] );  
     fbos[curfbo].getTextureReference( bbi ); //triggers updateTexture(attachmentPoint)
   }
 
@@ -271,19 +271,19 @@ ofTexture& gpgpu::Process::get( string id )
   }
 };
 
-void gpgpu::Process::upload( ofFbo& fbo, ofTexture& data )
+void gpgpu::Process::copy( ofTexture& src, ofFbo& dst )
 {
-  float scale = get_scale( data );
-  upload( fbo, data, data.getWidth()*scale, data.getHeight()*scale );
+  float scale = get_scale( src );
+  copy( src, dst, src.getWidth() * scale, src.getHeight() * scale );
 };
 
-void gpgpu::Process::upload( ofFbo& fbo, ofTexture& data, int w, int h )
+void gpgpu::Process::copy( ofTexture& src, ofFbo& dst, int w, int h )
 {
-  fbo.begin();
+  dst.begin();
   ofClear(0,255);
   ofSetColor(255);
-  data.draw( 0, 0, w, h );
-  fbo.end();
+  src.draw( 0, 0, w, h );
+  dst.end();
 };
 
 float* gpgpu::Process::get_data( string id )
@@ -363,11 +363,11 @@ ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
   s.width = src.getWidth() * scale;
   s.height = src.getHeight() * scale;
 
-  ofFbo fbo;
-  fbo.allocate(s);
-  upload( fbo, src, s.width, s.height );
+  ofFbo dst;
+  dst.allocate(s);
+  copy( src, dst, s.width, s.height );
 
-  return fbo.getTextureReference(); //a copy
+  return dst.getTextureReference(); //a copy
 };
 
 float gpgpu::Process::get_scale( ofTexture& data )

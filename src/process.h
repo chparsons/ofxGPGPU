@@ -126,8 +126,8 @@ namespace gpgpu
 
       Process& _init( int _width, int _height );
 
-      void upload( ofFbo& fbo, ofTexture& data );
-      void upload( ofFbo& fbo, ofTexture& data, int w, int h );
+      void copy( ofTexture& src, ofFbo& dst );
+      void copy( ofTexture& src, ofFbo& dst, int w, int h );
       void set_bbuf_data( string id, vector<float>& data );
       void set_tex_data( ofTexture& tex, vector<float>& data, string id );
 
