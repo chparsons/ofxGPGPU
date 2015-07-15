@@ -47,12 +47,10 @@ namespace gpgpu
       Process& add_backbuffers( vector<string> bbuffs );
 
       Process& update_debug( string id = "debug_input" );
-      void draw_debug( float x, float y, float w, float h );
+      void render_debug( float x, float y, float w, float h );
       void set_debug( string frag_file_d );
 
-      //try to avoid this one
-      //though useful
-      //it is a performance bottleneck
+      //try to avoid this one: perf bottleneck
       //TODO impl https://github.com/satoruhiga/ofxFastFboReader
       //TODO cache fpix by id
       float* get_data( string id = "" );
@@ -113,9 +111,6 @@ namespace gpgpu
       ofFbo fbos[2];
       ofFbo::Settings fbo_settings;
       map<string,ofTexture> inputs;
-      //map<string,ofTexture> inputs_backbuffers;
-      //map<string,ofFbo> inputs;
-      //void init_input_tex( string id );
 
       ofShader of_shader;
 
@@ -133,14 +128,12 @@ namespace gpgpu
 
       void init_bbuf( string id );
       bool check_bbuf( int i, string id );
-      //bool check_input_bbuf(ofTexture& input_data);
-
       int bbuf_idx( string id );
+
       int pix_idx( int x, int y );
       //int get_tex_idx( string id );
 
       bool is_input( string id );
-      //bool is_input_backbuffer( string id );
       bool is_backbuffer( string id );
 
       void quad( float x, float y, float _width, float _height, float s, float t );

@@ -672,7 +672,7 @@ gpgpu::Process& gpgpu::Process::update_debug( string id )
     .update();
 };
 
-void gpgpu::Process::draw_debug( float x, float y, float w, float h )
+void gpgpu::Process::render_debug( float x, float y, float w, float h )
 {
   get_debug().get().draw(x,y,w,h);
 };
