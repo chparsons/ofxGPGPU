@@ -67,12 +67,7 @@ gpgpu::Process& gpgpu::Process::_init(
   s.numColorbuffers = nbbufs > 0 ? nbbufs : 1;
 
   for ( int i = 0; i < 2; i++ )
-  {
-    fbos[i].allocate(s);
-    fbos[i].begin();
-    ofClear(0,255);
-    fbos[i].end();
-  }
+    init_fbo( fbos[i] );
 
   // init data
   for (int i = 0; i < nbbufs; i++)
@@ -130,13 +125,17 @@ gpgpu::Process& gpgpu::Process::update( int passes )
 
     // input textures
     for ( map<string,ofTexture>::iterator it = inputs.begin(); it != inputs.end(); it++ )
+    //for ( map<string,ofFbo>::iterator it = inputs.begin(); it != inputs.end(); it++ )
     {
       of_shader.setUniformTexture( 
         it->first, 
         it->second,
+        //it->second.getTextureReference(),
         tex_i++ );
     }
 
+    //TODO pass st [0,1] to avoid doing this in frag:
+    //vec2 st = gl_TexCoord[0].xy / process_size * vec2(textureSize2DRect(data,0))
     //quad( -1, -1, 2, 2, _width, _height );
     quad(0,0,_width,_height,_width,_height);
 
@@ -160,13 +159,15 @@ gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
   int bbi = bbuf_idx( id );
   if ( bbi > -1 ) 
   {
-    copy( data, fbos[curfbo] );  
+    set_fbo( data, fbos[curfbo] );  
     fbos[curfbo].getTextureReference( bbi ); //triggers updateTexture(attachmentPoint)
   }
 
   else
   {
     inputs[id] = data; // copy input tex
+    //init_fbo( inputs[id] );
+    //set_fbo( data, inputs[id] );
   }
 
   return *this;
@@ -190,6 +191,7 @@ gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
   else if ( is_input( id ) )
   {
     set_tex_data( inputs[id], data, id ); 
+    //set_tex_data( inputs[id].getTextureReference(), data, id );
   } 
 
   else
@@ -271,17 +273,30 @@ ofTexture& gpgpu::Process::get( string id )
   }
 };
 
-void gpgpu::Process::copy( ofTexture& src, ofFbo& dst )
+void gpgpu::Process::init_fbo( ofFbo& fbo )
 {
-  float scale = get_scale( src );
-  copy( src, dst, src.getWidth() * scale, src.getHeight() * scale );
+  return init_fbo( fbo, fbo_settings );
 };
 
-void gpgpu::Process::copy( ofTexture& src, ofFbo& dst, int w, int h )
+void gpgpu::Process::init_fbo( ofFbo& fbo, ofFbo::Settings& s )
+{
+  if ( fbo.isAllocated() )
+    return;
+  fbo.allocate( s );
+  fbo.begin();
+  ofClear(0,255);
+  fbo.end();
+};
+
+void gpgpu::Process::set_fbo( ofTexture& src, ofFbo& dst )
+{
+  set_fbo( src, dst, dst.getWidth(), dst.getHeight() );
+};
+
+void gpgpu::Process::set_fbo( ofTexture& src, ofFbo& dst, int w, int h )
 {
   dst.begin();
   ofClear(0,255);
-  ofSetColor(255);
   src.draw( 0, 0, w, h );
   dst.end();
 };
@@ -292,11 +307,11 @@ float* gpgpu::Process::get_data( string id )
   return fpix.getPixels();
 };
 
-//ofFloatPixels& gpgpu::Process::get_data( string id )
-//{
-  //read_to_fpix( id );
-  //return fpix;
-//};
+ofFloatPixels& gpgpu::Process::get_data_pix( string id )
+{
+  read_to_fpix( id );
+  return fpix;
+};
 
 ofVec4f gpgpu::Process::get_data( int x, int y, string id )
 {
@@ -364,15 +379,10 @@ ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
   s.height = src.getHeight() * scale;
 
   ofFbo dst;
-  dst.allocate(s);
-  copy( src, dst, s.width, s.height );
+  init_fbo( dst, s );
+  set_fbo( src, dst, s.width, s.height );
 
   return dst.getTextureReference(); //a copy
-};
-
-float gpgpu::Process::get_scale( ofTexture& data )
-{
-  return (float)data.getWidth() / _width;
 };
 
 gpgpu::Process& gpgpu::Process::add_backbuffer( string id )
@@ -576,8 +586,10 @@ void gpgpu::Process::log_config()
 
   ofLog() << "\t input textures:";
   for ( map<string,ofTexture>::iterator it = inputs.begin(); it != inputs.end(); it++ )
+  //for ( map<string,ofFbo>::iterator it = inputs.begin(); it != inputs.end(); it++ )
   {
     ofTextureData& texd = it->second.getTextureData();
+    //ofTextureData& texd = it->second.getTextureReference().getTextureData();
     ofLog() << "\t\t" 
       << "id: "
       << it->first

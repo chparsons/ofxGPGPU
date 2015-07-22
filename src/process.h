@@ -54,7 +54,7 @@ namespace gpgpu
       //TODO impl https://github.com/satoruhiga/ofxFastFboReader
       //TODO cache fpix by id
       float* get_data( string id = "" );
-      //ofFloatPixels& get_data( string id = "" );
+      ofFloatPixels& get_data_pix( string id = "" );
       //vector<float>& get_data( string id = "" );
       ofVec4f get_data( int x, int y, string id = "" ); 
 
@@ -108,9 +108,14 @@ namespace gpgpu
       int curfbo;
       string _name;
 
-      ofFbo fbos[2];
       ofFbo::Settings fbo_settings;
+      ofFbo fbos[2];
+      void init_fbo( ofFbo& fbo );
+      void init_fbo( ofFbo& fbo, ofFbo::Settings& s );
+      void set_fbo( ofTexture& src, ofFbo& dst );
+      void set_fbo( ofTexture& src, ofFbo& dst, int w, int h );
       map<string,ofTexture> inputs;
+      //map<string,ofFbo> inputs;
 
       ofShader of_shader;
 
@@ -121,8 +126,6 @@ namespace gpgpu
 
       Process& _init( int _width, int _height );
 
-      void copy( ofTexture& src, ofFbo& dst );
-      void copy( ofTexture& src, ofFbo& dst, int w, int h );
       void set_bbuf_data( string id, vector<float>& data );
       void set_tex_data( ofTexture& tex, vector<float>& data, string id );
 
@@ -138,7 +141,6 @@ namespace gpgpu
 
       void quad( float x, float y, float _width, float _height, float s, float t );
 
-      float get_scale( ofTexture& data );
       ofTexture get_scaled_tex( ofTexture& src, float scale );
       ofTexture get_scaled_tex( ofTexture& src, int width, int height );
 
