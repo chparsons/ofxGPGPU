@@ -3,6 +3,20 @@
 
 string gpgpu::Process::g_watch = "local";
 
+void gpgpu::Process::dispose()
+{
+  fpix.clear();
+  for ( int i = 0; i < 2; i++ )
+    delete fbos[i];
+  for ( map<string,ofTexture>::iterator it = inputs.begin(); it != inputs.end(); it++ )
+    it->second.clear();
+  inputs.clear();
+  backbuffers.clear();
+  dispose_debug();
+  shader = NULL;
+  _inited = false;
+};
+
 gpgpu::Process& gpgpu::Process::init(
     gpgpu::Shader* shader, 
     int _width, int _height )
@@ -67,7 +81,10 @@ gpgpu::Process& gpgpu::Process::_init(
   s.numColorbuffers = nbbufs > 0 ? nbbufs : 1;
 
   for ( int i = 0; i < 2; i++ )
-    init_fbo( fbos[i] );
+  {
+    fbos[i] = new ofFbo();
+    init_fbo( *(fbos[i]) );
+  }
 
   // init data
   for (int i = 0; i < nbbufs; i++)
@@ -84,8 +101,8 @@ gpgpu::Process& gpgpu::Process::update( int passes )
   int pass = 0;
   while ( pass < passes )
   {
-    ofFbo* read = &(fbos[curfbo]);
-    ofFbo* write = &(fbos[1-curfbo]);
+    ofFbo* read = fbos[curfbo];
+    ofFbo* write = fbos[1-curfbo];
 
     write->begin();
     ofClear(0,255);
@@ -159,8 +176,8 @@ gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
   int bbi = bbuf_idx( id );
   if ( bbi > -1 ) 
   {
-    set_fbo( data, fbos[curfbo] );  
-    fbos[curfbo].getTextureReference( bbi ); //triggers updateTexture(attachmentPoint)
+    set_fbo( data, *(fbos[curfbo]) );
+    fbos[curfbo]->getTextureReference( bbi ); //triggers updateTexture(attachmentPoint)
   }
 
   else
@@ -211,7 +228,7 @@ void gpgpu::Process::set_bbuf_data( string id, vector<float>& data )
   int i = bbuf_idx( id );
   if ( !check_bbuf(i,id) ) 
     return;
-  set_tex_data( fbos[curfbo].getTextureReference( i ), data, id );
+  set_tex_data( fbos[curfbo]->getTextureReference( i ), data, id );
 };
 
 void gpgpu::Process::set_tex_data( ofTexture& tex, vector<float>& data, string id )
@@ -248,7 +265,7 @@ ofTexture& gpgpu::Process::get( string id )
   // get process result
   if ( id.empty() )
   {
-    return fbos[curfbo].getTextureReference( 0 );
+    return fbos[curfbo]->getTextureReference( 0 );
   }
 
   // an input texture
@@ -263,7 +280,7 @@ ofTexture& gpgpu::Process::get( string id )
     int i = bbuf_idx( id );
     if ( check_bbuf(i,id) )
     {
-      return fbos[curfbo].getTextureReference( i );
+      return fbos[curfbo]->getTextureReference( i );
     }
     else
     {
@@ -325,7 +342,7 @@ void gpgpu::Process::read_to_fpix( string id)
 
   if ( id.empty() )
   {
-    fbos[curfbo].readToPixels( fpix, 0 );
+    fbos[curfbo]->readToPixels( fpix, 0 );
     return;
   }
 
@@ -343,7 +360,7 @@ void gpgpu::Process::read_to_fpix( string id)
     if ( check_bbuf(i,id) ) 
     {
       fbos[curfbo]
-        .readToPixels( fpix, i );
+        ->readToPixels( fpix, i );
         //.getTextureReference( i )
         //.readToPixels( fpix );
     }
@@ -450,7 +467,7 @@ int gpgpu::Process::bbuf_idx( string id )
 {
   vector<string>::iterator it = std::find( backbuffers.begin(), backbuffers.end(), id );
   int i = it - backbuffers.begin();
-  if ( it == backbuffers.end() || i >= fbos[curfbo].getNumTextures() )
+  if ( it == backbuffers.end() || i >= fbos[curfbo]->getNumTextures() )
     return -1;
   return i;
 };
@@ -682,6 +699,18 @@ gpgpu::Process& gpgpu::Process::update_debug( string id )
   return get_debug()
     .set( id, get() )
     .update();
+};
+
+gpgpu::Process& gpgpu::Process::update_debug( bool run, string id )
+{
+  if (run) update_debug( id );
+  else dispose_debug();
+};
+
+void gpgpu::Process::dispose_debug()
+{
+  delete _debug;
+  _debug = NULL;
 };
 
 void gpgpu::Process::render_debug( float x, float y, float w, float h )

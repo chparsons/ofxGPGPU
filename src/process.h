@@ -22,7 +22,7 @@ namespace gpgpu
 
       ~Process()
       {
-        delete _debug;
+        dispose();
       };
 
       Process& init(
@@ -34,6 +34,8 @@ namespace gpgpu
           int _width, int _height );
 
       Process& update( int passes = 1 );
+
+      void dispose();
 
       Process& set( string id, ofTexture& data );
       Process& set( string id, vector<float>& data );
@@ -47,6 +49,8 @@ namespace gpgpu
       Process& add_backbuffers( vector<string> bbuffs );
 
       Process& update_debug( string id = "debug_input" );
+      Process& update_debug( bool run, string id = "debug_input" );
+      void dispose_debug();
       void render_debug( float x, float y, float w, float h );
       void set_debug( string frag_file_d );
 
@@ -109,7 +113,7 @@ namespace gpgpu
       string _name;
 
       ofFbo::Settings fbo_settings;
-      ofFbo fbos[2];
+      ofFbo* fbos[2];
       void init_fbo( ofFbo& fbo );
       void init_fbo( ofFbo& fbo, ofFbo::Settings& s );
       void set_fbo( ofTexture& src, ofFbo& dst );
