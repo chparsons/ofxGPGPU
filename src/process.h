@@ -20,7 +20,7 @@ namespace gpgpu
         _inited = false;
       };
 
-      ~Process()
+      virtual ~Process()
       {
         dispose();
       };

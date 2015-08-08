@@ -11,7 +11,7 @@ void ofApp::setup(){
 	video.initGrabber( w, h, true );
 
   gaussian
-    .init( &gaussian_shader, w, h )
+    .init( w, h )
     .on( "update", this, &ofApp::update_gaussian );
 }
 

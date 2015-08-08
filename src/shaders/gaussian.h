@@ -11,7 +11,7 @@
 namespace gpgpu
 {
 
-class Gaussian : public gpgpu::Shader
+class GaussianShader : public gpgpu::Shader
 {
   private:
 
@@ -149,6 +149,18 @@ class Gaussian : public gpgpu::Shader
     //); //fragment code
   //};
 
-}; //endof class
+}; //endof GaussianShader
+
+class Gaussian : public gpgpu::Process
+{
+  public:
+  Process& init( int w, int h )
+  {
+    return Process::init( &gaussian_shader, w, h );
+  };
+  private:
+  GaussianShader gaussian_shader;
+};
+
 }; //endof namespace
 
