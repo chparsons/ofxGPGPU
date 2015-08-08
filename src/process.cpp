@@ -117,10 +117,12 @@ gpgpu::Process& gpgpu::Process::update( int passes )
 
     of_shader.begin();
 
-    ofNotifyEvent( on_update, of_shader, this );
-
+    // pass data from gpgpu::Shader
     if ( shader != NULL )
       shader->update( of_shader, pass );
+
+    // let users override gpgpu::Shader data
+    ofNotifyEvent( on_update, of_shader, this );
 
     // pass some default uniforms
     of_shader.setUniform2f( "size", _width, _height );

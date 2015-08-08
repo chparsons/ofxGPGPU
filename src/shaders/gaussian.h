@@ -31,7 +31,8 @@ class Gaussian : public gpgpu::Shader
 
     void update( ofShader& shader, int pass )
     {
-      shader.setUniform1i( "gpass", (float)(pass%2) ); 
+      shader.setUniform1i( "gpass", (float)(pass%2) );
+      shader.setUniform1f( "alpha", -1.0 ); //process alpha by default
     }; 
 
     string fragment()
@@ -46,6 +47,7 @@ class Gaussian : public gpgpu::Shader
       uniform int gpass;
       uniform float sigma;
       uniform int kernel;
+      uniform float alpha; //pass -1. to process alpha
 
       vec2 dir; // horiz=(1.0, 0.0), vert=(0.0, 1.0)
 
@@ -72,7 +74,8 @@ class Gaussian : public gpgpu::Shader
         }
 
         acc *= norm; // normalize for unity gain
-        gl_FragColor = acc;
+
+        gl_FragColor = alpha < 0.0 ? acc : vec4( acc.xyz, alpha );
       }
 
       ); //fragment code
