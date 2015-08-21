@@ -48,6 +48,7 @@ namespace gpgpu
       Process& add_backbuffer( string id );
       Process& add_backbuffers( vector<string> bbuffs );
 
+      Process& get_debug();
       Process& update_debug( string id = "debug_input" );
       Process& update_debug( bool run, string id = "debug_input" );
       void dispose_debug();
@@ -160,7 +161,6 @@ namespace gpgpu
       string file_hash();
 
       Process* _debug;
-      Process& get_debug();
       void _debug_init_from_code();
 
       ofEvent<ofShader> on_init;
