@@ -6,8 +6,9 @@ string gpgpu::Process::g_watch = "local";
 void gpgpu::Process::dispose()
 {
   fpix.clear();
-  for ( int i = 0; i < 2; i++ )
-    delete fbos[i];
+  if (_inited)
+    for ( int i = 0; i < 2; i++ )
+      delete fbos[i];
   for ( map<string,ofTexture>::iterator it = inputs.begin(); it != inputs.end(); it++ )
     it->second.clear();
   inputs.clear();
