@@ -78,7 +78,7 @@ class OddEvenMergeSort : public gpgpu::Shader
 
   string fragment()
   {
-    return "#version 120\n #extension GL_ARB_texture_rectangle : enable\n " xstr(
+    return "#version 120\n #extension GL_ARB_texture_rectangle : enable\n " STRINGIFY(
 
     uniform sampler2DRect data;
 

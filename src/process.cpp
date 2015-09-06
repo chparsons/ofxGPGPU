@@ -154,9 +154,8 @@ gpgpu::Process& gpgpu::Process::update( int passes )
         tex_i++ );
     }
 
-    //TODO pass st [0,1] to avoid doing this in frag:
+    //TODO pass st [0,1] to avoid doing this in frags:
     //vec2 st = gl_TexCoord[0].xy / process_size * vec2(textureSize2DRect(data,0))
-    //quad( -1, -1, 2, 2, _width, _height );
     quad(0,0,_width,_height,_width,_height);
 
     of_shader.end();

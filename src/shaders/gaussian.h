@@ -37,7 +37,7 @@ class GaussianShader : public gpgpu::Shader
 
     string fragment()
     {
-      return "#version 120 \n #extension GL_ARB_texture_rectangle : enable \n #extension GL_EXT_gpu_shader4 : enable \n" xstr(
+      return "#version 120 \n #extension GL_ARB_texture_rectangle : enable \n #extension GL_EXT_gpu_shader4 : enable \n" STRINGIFY(
 
       uniform vec2 size;
       uniform int pass;
@@ -88,7 +88,7 @@ class GaussianShader : public gpgpu::Shader
 
     //string fragment()
     //{
-      //return "#version 120\n #extension GL_ARB_texture_rectangle : enable\n #extension GL_EXT_gpu_shader4 : enable\n" xstr(
+      //return "#version 120\n #extension GL_ARB_texture_rectangle : enable\n #extension GL_EXT_gpu_shader4 : enable\n" STRINGIFY(
 
       //uniform int gpass;
 

@@ -1,9 +1,7 @@
 #pragma once
 
-#define xstr(x) #x
+#define STRINGIFY(x) #x
 
 #include "ofShader.h"
 #include "process.h"
 #include "shader.h"
-//#include "shaders/oddevenmergesort.h"
-//#include "shaders/gaussian.h"
