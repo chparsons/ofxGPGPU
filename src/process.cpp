@@ -139,7 +139,7 @@ gpgpu::Process& gpgpu::Process::update( int passes )
     {
       of_shader.setUniformTexture( 
         backbuffers[i], 
-        read->getTextureReference( bbuf_i++ ),
+        read->getTexture( bbuf_i++ ),
         tex_i++ );
     }
 
@@ -150,7 +150,7 @@ gpgpu::Process& gpgpu::Process::update( int passes )
       of_shader.setUniformTexture( 
         it->first, 
         it->second,
-        //it->second.getTextureReference(),
+        //it->second.getTexture(),
         tex_i++ );
     }
 
@@ -179,7 +179,7 @@ gpgpu::Process& gpgpu::Process::set( string id, ofTexture& data )
   if ( bbi > -1 ) 
   {
     set_fbo( data, *(fbos[curfbo]) );
-    fbos[curfbo]->getTextureReference( bbi ); //triggers updateTexture(attachmentPoint)
+    fbos[curfbo]->getTexture( bbi ); //triggers updateTexture(attachmentPoint)
   }
 
   else
@@ -210,7 +210,7 @@ gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
   else if ( is_input( id ) )
   {
     set_tex_data( inputs[id], data, id ); 
-    //set_tex_data( inputs[id].getTextureReference(), data, id );
+    //set_tex_data( inputs[id].getTexture(), data, id );
   } 
 
   else
@@ -230,7 +230,7 @@ void gpgpu::Process::set_bbuf_data( string id, vector<float>& data )
   int i = bbuf_idx( id );
   if ( !check_bbuf(i,id) ) 
     return;
-  set_tex_data( fbos[curfbo]->getTextureReference( i ), data, id );
+  set_tex_data( fbos[curfbo]->getTexture( i ), data, id );
 };
 
 void gpgpu::Process::set_tex_data( ofTexture& tex, vector<float>& data, string id )
@@ -267,7 +267,7 @@ ofTexture& gpgpu::Process::get( string id )
   // get process result
   if ( id.empty() )
   {
-    return fbos[curfbo]->getTextureReference( 0 );
+    return fbos[curfbo]->getTexture( 0 );
   }
 
   // an input texture
@@ -282,7 +282,7 @@ ofTexture& gpgpu::Process::get( string id )
     int i = bbuf_idx( id );
     if ( check_bbuf(i,id) )
     {
-      return fbos[curfbo]->getTextureReference( i );
+      return fbos[curfbo]->getTexture( i );
     }
     else
     {
@@ -323,7 +323,7 @@ void gpgpu::Process::set_fbo( ofTexture& src, ofFbo& dst, int w, int h )
 float* gpgpu::Process::get_data( string id )
 {
   read_to_fpix( id );
-  return fpix.getPixels();
+  return fpix.getData();
 };
 
 ofFloatPixels& gpgpu::Process::get_data_pix( string id )
@@ -363,7 +363,7 @@ void gpgpu::Process::read_to_fpix( string id)
     {
       fbos[curfbo]
         ->readToPixels( fpix, i );
-        //.getTextureReference( i )
+        //.getTexture( i )
         //.readToPixels( fpix );
     }
     else
@@ -401,7 +401,7 @@ ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
   init_fbo( dst, s );
   set_fbo( src, dst, s.width, s.height );
 
-  return dst.getTextureReference(); //a copy
+  return dst.getTexture(); //a copy
 };
 
 gpgpu::Process& gpgpu::Process::add_backbuffer( string id )
@@ -608,7 +608,7 @@ void gpgpu::Process::log_config()
   //for ( map<string,ofFbo>::iterator it = inputs.begin(); it != inputs.end(); it++ )
   {
     ofTextureData& texd = it->second.getTextureData();
-    //ofTextureData& texd = it->second.getTextureReference().getTextureData();
+    //ofTextureData& texd = it->second.getTexture().getTextureData();
     ofLog() << "\t\t" 
       << "id: "
       << it->first
