@@ -84,6 +84,11 @@ namespace gpgpu
         return _height;
       };
 
+      bool inited()
+      {
+        return _inited;
+      };
+
       void log( int x, int y, string id = "" );
       void log( string id = "" );
       void log_config();

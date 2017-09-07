@@ -619,7 +619,7 @@ void gpgpu::Process::log_config()
       << ", "
       << "allocated: " << texd.bAllocated
       << ", "
-      << "internal format: " << ofGetGlInternalFormatName(texd.glTypeInternal);
+      << "internal format: " << ofGetGlInternalFormatName(texd.glInternalFormat);
   }
 
 };
