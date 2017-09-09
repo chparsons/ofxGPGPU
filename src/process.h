@@ -146,10 +146,10 @@ namespace gpgpu
       int pix_idx( int x, int y );
       //int get_tex_idx( string id );
 
-      bool is_input( string id );
       bool is_backbuffer( string id );
+      bool is_input( string id );
 
-      void quad( float x, float y, float _width, float _height, float s, float t );
+      void quad( float x, float y, float _width, float _height );
 
       ofTexture get_scaled_tex( ofTexture& src, float scale );
       ofTexture get_scaled_tex( ofTexture& src, int width, int height );

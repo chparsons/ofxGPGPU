@@ -154,9 +154,7 @@ gpgpu::Process& gpgpu::Process::update( int passes )
         tex_i++ );
     }
 
-    //TODO pass st [0,1] to avoid doing this in frags:
-    //vec2 st = gl_TexCoord[0].xy / process_size * vec2(textureSize2DRect(data,0))
-    quad(0,0,_width,_height,_width,_height);
+    quad(0, 0, _width, _height);
 
     of_shader.end();
 
@@ -207,20 +205,11 @@ gpgpu::Process& gpgpu::Process::set( string id, vector<float>& data )
     set_bbuf_data( id, data );
   }
 
-  else if ( is_input( id ) )
+  else
   {
     set_tex_data( inputs[id], data, id ); 
     //set_tex_data( inputs[id].getTexture(), data, id );
   } 
-
-  else
-  {
-    ofLogWarning("gpgpu::Process") 
-      << "[" << _name << "] "
-      << "set data: "
-      << "[" << id << "] "
-      << "not found";
-  }
 
   return *this;
 };
@@ -665,8 +654,13 @@ void gpgpu::Process::update_watch()
   }
 }
 
-void gpgpu::Process::quad( float x, float y, float _width, float _height, float s, float t )
+void gpgpu::Process::quad( float x, float y, float _width, float _height)
 {
+
+  //TODO set st [0,1] to avoid doing this in frags:
+  //vec2 st = gl_TexCoord[0].xy / process_size * vec2(textureSize2DRect(data,0))
+  float s = _width;
+  float t = _height;
 
   glBegin(GL_TRIANGLES);
 
