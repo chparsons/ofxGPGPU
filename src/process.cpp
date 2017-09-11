@@ -13,14 +13,15 @@ void gpgpu::Process::dispose()
     it->second.clear();
   inputs.clear();
   backbuffers.clear();
-  dispose_debug();
+  dispose_render();
   shader = NULL;
   _inited = false;
 };
 
 gpgpu::Process& gpgpu::Process::init(
     gpgpu::Shader* shader, 
-    int _width, int _height )
+    int _width, int _height, 
+    int _channels )
 {
   this->shader = shader;
   _name = shader->name();
@@ -36,12 +37,13 @@ gpgpu::Process& gpgpu::Process::init(
       << "shader failed to link";
 
   add_backbuffers( shader->backbuffers() );
-  return _init( _width, _height );
+  return _init( _width, _height, _channels );
 };
 
 gpgpu::Process& gpgpu::Process::init(
     string frag_file, 
-    int _width, int _height )
+    int _width, int _height, 
+    int _channels )
 {
   _name = frag_file;
   file_path = frag_file;
@@ -49,27 +51,28 @@ gpgpu::Process& gpgpu::Process::init(
     ofLogError("gpgpu::Process") 
       << "[" << _name << "]: "
       << "shader failed to load";
-  return _init( _width, _height );
+  return _init( _width, _height, _channels );
 };
 
 gpgpu::Process& gpgpu::Process::_init(
-    int _width, int _height )
+    int _width, int _height, 
+    int _channels )
 {
 
   this->_width = _width;
   this->_height = _height;
+  this->_channels = _channels;
 
   curfbo = 0;
-  channels = 4; //rgba
 
-  _size = _width * _height * channels;
-  fpix.allocate(_width, _height, channels);
+  _size = _width * _height * _channels;
+  fpix.allocate(_width, _height, _channels);
   int nbbufs = backbuffers.size();
 
   // init ping pong fbos
 
   ofFbo::Settings& s = fbo_settings;
-  s.internalformat = GL_RGBA32F_ARB;
+  s.internalformat = get_internal_format();
   s.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
   s.minFilter = GL_NEAREST;
   s.maxFilter = GL_NEAREST;
@@ -237,15 +240,15 @@ void gpgpu::Process::set_tex_data( ofTexture& tex, vector<float>& data, string i
   }
 
   if ( !tex.isAllocated() )
-    tex.allocate( _width, _height, GL_RGBA32F_ARB, GL_RGBA, GL_FLOAT );
+    tex.allocate( _width, _height, get_internal_format(), get_format(), GL_FLOAT );
 
-  tex.loadData( &data[0], _width, _height, GL_RGBA );
+  tex.loadData( &data[0], _width, _height, get_format() );
 
   //tex.bind();
   //glTexSubImage2D( 
       //GL_TEXTURE_RECTANGLE_ARB, 0, 
       //0, 0, _width, _height, 
-      //GL_RGBA, GL_FLOAT, 
+      //get_format(), GL_FLOAT, 
       //data );
   //tex.unbind();
 };
@@ -465,7 +468,7 @@ int gpgpu::Process::bbuf_idx( string id )
 
 int gpgpu::Process::pix_idx( int x, int y )
 {
-  return ( x + y * _width ) * channels; 
+  return ( x + y * _width ) * _channels; 
 };
 
 int gpgpu::Process::size()
@@ -528,8 +531,9 @@ void gpgpu::Process::log( string id )
 
 void gpgpu::Process::log_datum( int i, int x, int y, float r, float g, float b, float a )
 {
-  ofLog() << "\t" 
+  ofLog() 
     << "[" << _name << "] "
+    << "\t" 
     << "idx: "
     << ofToString(i) 
     << "\t xy: "
@@ -690,49 +694,77 @@ void gpgpu::Process::quad( float x, float y, float _width, float _height)
 
 };
 
-gpgpu::Process& gpgpu::Process::update_debug( string id )
+int gpgpu::Process::get_format()
 {
-  return get_debug()
-    .set( id, get() )
-    .update();
+  switch(_channels) 
+  {
+    case 1:
+      return GL_LUMINANCE;
+    case 3:
+      return GL_RGB;
+    default:
+      return GL_RGBA;
+  };
 };
 
-gpgpu::Process& gpgpu::Process::update_debug( bool run, string id )
+int gpgpu::Process::get_internal_format()
 {
-  if (run) update_debug( id );
-  else dispose_debug();
+  switch(_channels) 
+  {
+    case 1:
+      return GL_LUMINANCE32F_ARB;
+    case 3:
+      return GL_RGB32F_ARB;
+    default:
+      return GL_RGBA32F_ARB;
+  };
 };
 
-void gpgpu::Process::dispose_debug()
+gpgpu::Process& gpgpu::Process::update_render( string id )
 {
-  delete _debug;
-  _debug = NULL;
+  Process& render = get_render();
+  render.set( id, get() );
+  return render.update();
 };
 
-void gpgpu::Process::render_debug( float x, float y, float w, float h )
+gpgpu::Process& gpgpu::Process::update_render( bool run, string id )
 {
-  get_debug().get().draw(x,y,w,h);
+  if (run) update_render( id );
+  else dispose_render();
 };
 
-gpgpu::Process& gpgpu::Process::get_debug()
+void gpgpu::Process::dispose_render()
 {
-  _debug_init_from_code();
-  return *_debug;
+  delete _render;
+  _render = NULL;
 };
 
-void gpgpu::Process::set_debug( string frag_file_d )
+void gpgpu::Process::render( float x, float y, float w, float h )
 {
-  if ( _debug != NULL )
+  Process& render = get_render();
+  ofTexture& tex = render.get();
+  tex.draw(x, y, w, h);
+};
+
+gpgpu::Process& gpgpu::Process::get_render()
+{
+  _render_init_from_code();
+  return *_render;
+};
+
+void gpgpu::Process::set_render( string frag_file_d )
+{
+  if ( _render != NULL )
     return;
-  _debug = new Process();
-  _debug->init( frag_file_d, _width, _height );
+  _render = new Process();
+  _render->init( frag_file_d, _width, _height, _channels );
 };
 
-void gpgpu::Process::_debug_init_from_code()
+void gpgpu::Process::_render_init_from_code()
 {
-  if ( _debug != NULL )
+  if ( _render != NULL )
     return;
-  _debug = new Process();
+  _render = new Process();
 
   string filename = file_path;
   GLenum type = GL_FRAGMENT_SHADER;
@@ -741,7 +773,7 @@ void gpgpu::Process::_debug_init_from_code()
   {
     ofLogError("gpgpu::Process") 
       << "[" << _name << "]: "
-      << "_debug_init_from_code(): "
+      << "_render_init_from_code(): "
       << "couldn't init code from empty fragment filename";
     return;
   }
@@ -755,50 +787,50 @@ void gpgpu::Process::_debug_init_from_code()
   if ( !buffer.size() ) 
   {
     ofLogError("gpgpu::Process") 
-      << "_debug_init_from_code(): "
+      << "_render_init_from_code(): "
       << "couldn't load shader from \""<<filename<<"\"";
     return;
   } 
 
-  _debug->_name = _name+"_debug";
+  _render->_name = _name+"_render";
 
   string frag_code = buffer.getText();
-  bool debug_enabled = ofIsStringInString(frag_code, "void __debug__");
-  if ( !debug_enabled)
+  bool render_enabled = ofIsStringInString(frag_code, "void __render__");
+  if ( !render_enabled)
   {
     ofLogError("gpgpu::Process") 
-      << "[" << _debug->_name << "]: "
-      << "_debug_init_from_code(): "
-      << "fragment code does not contain a \"void __debug__()\" function to parse";
+      << "[" << _render->_name << "]: "
+      << "_render_init_from_code(): "
+      << "fragment code does not contain a \"void __render__()\" function to parse";
     return;
   }
 
   ofStringReplace(frag_code, "void main", "void __main__");
-  ofStringReplace(frag_code, "void __debug__", "void main");
-  //ofLogNotice("gpgpu::Process") << "init debug process" 
+  ofStringReplace(frag_code, "void __render__", "void main");
+  //ofLogNotice("gpgpu::Process") << "init render process" 
     //<< " frag_code: \n\n" 
     //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
     //<< frag_code
     //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
 
-  if ( ! _debug->of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, frag_code, sourceDirectoryPath ) )
+  if ( ! _render->of_shader.setupShaderFromSource( GL_FRAGMENT_SHADER, frag_code, sourceDirectoryPath ) )
     ofLogError("gpgpu::Process") 
-      << "[" << _debug->_name << "]: "
-      << "_debug_init_from_code(): "
+      << "[" << _render->_name << "]: "
+      << "_render_init_from_code(): "
       << "shader failed to compile";
 
-  if ( ! _debug->of_shader.linkProgram() )
+  if ( ! _render->of_shader.linkProgram() )
     ofLogError("gpgpu::Process") 
-      << "[" << _debug->_name << "]: "
-      << "_debug_init_from_code(): "
+      << "[" << _render->_name << "]: "
+      << "_render_init_from_code(): "
       << "shader failed to link";
 
-  //ofLogNotice("gpgpu::Process") << "init debug process ["
+  //ofLogNotice("gpgpu::Process") << "init render process ["
     //<< _name << "] frag_code: \n\n" 
     //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n"
-    //<< _debug->of_shader.getShaderSource( GL_FRAGMENT_SHADER )
+    //<< _render->of_shader.getShaderSource( GL_FRAGMENT_SHADER )
     //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
 
-  _debug->_init( _width, _height );
+  _render->_init( _width, _height, _channels );
 };
 

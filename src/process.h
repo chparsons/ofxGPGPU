@@ -16,7 +16,7 @@ namespace gpgpu
       {
         shader = NULL;
         file_path = "";
-        _debug = NULL;
+        _render = NULL;
         _inited = false;
       };
 
@@ -27,11 +27,13 @@ namespace gpgpu
 
       Process& init(
           gpgpu::Shader* shader, 
-          int _width, int _height ); 
+          int _width, int _height, 
+          int _channels = 4 ); 
 
       Process& init(
           string frag_file, 
-          int _width, int _height );
+          int _width, int _height, 
+          int _channels = 4 );
 
       Process& update( int passes = 1 );
 
@@ -48,12 +50,12 @@ namespace gpgpu
       Process& add_backbuffer( string id );
       Process& add_backbuffers( vector<string> bbuffs );
 
-      Process& get_debug();
-      Process& update_debug( string id = "debug_input" );
-      Process& update_debug( bool run, string id = "debug_input" );
-      void dispose_debug();
-      void render_debug( float x, float y, float w, float h );
-      void set_debug( string frag_file_d );
+      Process& get_render();
+      Process& update_render( string id = "render_input" );
+      Process& update_render( bool run, string id = "render_input" );
+      void dispose_render();
+      void render( float x, float y, float w, float h );
+      void set_render( string frag_file_d );
 
       //try to avoid this one: perf bottleneck
       //TODO impl https://github.com/satoruhiga/ofxFastFboReader
@@ -82,6 +84,11 @@ namespace gpgpu
       int height()
       {
         return _height;
+      };
+
+      int channels()
+      {
+        return _channels;
       };
 
       bool inited()
@@ -113,8 +120,8 @@ namespace gpgpu
 
       int _width, _height;
       int _size;
+      int _channels;
       bool _inited;
-      int channels;
       int curfbo;
       string _name;
 
@@ -134,7 +141,7 @@ namespace gpgpu
 
       gpgpu::Shader* shader; 
 
-      Process& _init( int _width, int _height );
+      Process& _init( int _width, int _height, int _channels = 4 );
 
       void set_bbuf_data( string id, vector<float>& data );
       void set_tex_data( ofTexture& tex, vector<float>& data, string id );
@@ -151,6 +158,9 @@ namespace gpgpu
 
       void quad( float x, float y, float _width, float _height );
 
+      int get_format();
+      int get_internal_format();
+
       ofTexture get_scaled_tex( ofTexture& src, float scale );
       ofTexture get_scaled_tex( ofTexture& src, int width, int height );
 
@@ -165,8 +175,8 @@ namespace gpgpu
       string file_current_hash;
       string file_hash();
 
-      Process* _debug;
-      void _debug_init_from_code();
+      Process* _render;
+      void _render_init_from_code();
 
       ofEvent<ofShader> on_init;
       ofEvent<ofShader> on_update;
