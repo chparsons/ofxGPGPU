@@ -3,5 +3,5 @@
 #define STRINGIFY(x) #x
 
 #include "ofShader.h"
-#include "process.h"
-#include "shader.h"
+#include "ofxGPGPU/process.h"
+#include "ofxGPGPU/shader.h"

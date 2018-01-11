@@ -154,12 +154,15 @@ class GaussianShader : public gpgpu::Shader
 class Gaussian : public gpgpu::Process
 {
   public:
-  Process& init( int w, int h )
-  {
-    return Process::init( &gaussian_shader, w, h );
-  };
+
+    Process& init( int w, int h )
+    {
+      return Process::init( &gaussian_shader, w, h );
+    };
+
   private:
-  GaussianShader gaussian_shader;
+
+    GaussianShader gaussian_shader;
 };
 
 }; //endof namespace

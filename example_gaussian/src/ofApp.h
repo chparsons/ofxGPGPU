@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxGPGPU.h"
-#include "shaders/gaussian.h"
+#include "ofxGPGPU/shaders/gaussian.h"
 
 class ofApp : public ofBaseApp{
 

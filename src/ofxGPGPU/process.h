@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
-#include "shader.h"
+#include "ofxGPGPU/shader.h"
 #include <openssl/md5.h>
 
 namespace gpgpu
@@ -14,9 +14,9 @@ namespace gpgpu
 
       Process()
       {
-        shader = NULL;
+        shader = nullptr;
         file_path = "";
-        _render = NULL;
+        _render = nullptr;
         _inited = false;
       };
 
@@ -52,7 +52,7 @@ namespace gpgpu
 
       Process& get_render();
       Process& update_render( string id = "render_input" );
-      Process& update_render( bool run, string id = "render_input" );
+      void update_render( bool run, string id = "render_input" );
       void dispose_render();
       void render( float x, float y, float w, float h );
       void set_render( string frag_file_d );

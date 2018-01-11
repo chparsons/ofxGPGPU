@@ -1,5 +1,4 @@
-
-#include "process.h"
+#include "ofxGPGPU/process.h"
 
 string gpgpu::Process::g_watch = "local";
 
@@ -14,7 +13,7 @@ void gpgpu::Process::dispose()
   inputs.clear();
   backbuffers.clear();
   dispose_render();
-  shader = NULL;
+  shader = nullptr;
   _inited = false;
 };
 
@@ -122,7 +121,7 @@ gpgpu::Process& gpgpu::Process::update( int passes )
     of_shader.begin();
 
     // pass data from gpgpu::Shader
-    if ( shader != NULL )
+    if ( shader != nullptr )
       shader->update( of_shader, pass );
 
     // let users override gpgpu::Shader data
@@ -360,7 +359,7 @@ void gpgpu::Process::read_to_fpix( string id)
     }
     else
     {
-      return NULL;
+      return nullptr;
     } 
   }
 };
@@ -565,7 +564,7 @@ string gpgpu::Process::file_hash()
   int bytes;
   unsigned char data[1024];
 
-  if ( inFile != NULL )
+  if ( inFile != nullptr )
   {
     MD5_Init (&mdContext);
     while ((bytes = fread (data, 1, 1024, inFile)) != 0)
@@ -578,7 +577,7 @@ string gpgpu::Process::file_hash()
     fclose (inFile);
   }
 
-  inFile = NULL;
+  inFile = nullptr;
   return ret;
 }
 
@@ -641,7 +640,7 @@ void gpgpu::Process::update_watch()
     return;
 
   //watch!
-  if ( ofGetSeconds() % 3 == 0.0 )
+  if ( ofGetSeconds() % 4 == 0.0 )
   {
     string hash = file_hash();
     if ( file_current_hash != hash )
@@ -727,7 +726,7 @@ gpgpu::Process& gpgpu::Process::update_render( string id )
   return render.update();
 };
 
-gpgpu::Process& gpgpu::Process::update_render( bool run, string id )
+void gpgpu::Process::update_render( bool run, string id )
 {
   if (run) update_render( id );
   else dispose_render();
@@ -736,7 +735,7 @@ gpgpu::Process& gpgpu::Process::update_render( bool run, string id )
 void gpgpu::Process::dispose_render()
 {
   delete _render;
-  _render = NULL;
+  _render = nullptr;
 };
 
 void gpgpu::Process::render( float x, float y, float w, float h )
@@ -754,7 +753,7 @@ gpgpu::Process& gpgpu::Process::get_render()
 
 void gpgpu::Process::set_render( string frag_file_d )
 {
-  if ( _render != NULL )
+  if ( _render != nullptr )
     return;
   _render = new Process();
   _render->init( frag_file_d, _width, _height, _channels );
@@ -762,7 +761,7 @@ void gpgpu::Process::set_render( string frag_file_d )
 
 void gpgpu::Process::_render_init_from_code()
 {
-  if ( _render != NULL )
+  if ( _render != nullptr )
     return;
   _render = new Process();
 
