@@ -357,10 +357,6 @@ void gpgpu::Process::read_to_fpix( string id)
         //.getTexture( i )
         //.readToPixels( fpix );
     }
-    else
-    {
-      return nullptr;
-    } 
   }
 };
 
