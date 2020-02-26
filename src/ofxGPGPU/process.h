@@ -184,8 +184,7 @@ namespace gpgpu
       {
         if ( type == "update" ) 
           return on_update;
-        else if ( type == "init" ) 
-          return on_init;
+        return on_init;
       };
   };
 
