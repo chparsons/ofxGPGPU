@@ -19,8 +19,7 @@ void gpgpu::Process::dispose()
 
 gpgpu::Process& gpgpu::Process::init(
     gpgpu::Shader* shader, 
-    int _width, int _height, 
-    int _channels )
+    int _width, int _height)
 {
   this->shader = shader;
   _name = shader->name();
@@ -36,13 +35,12 @@ gpgpu::Process& gpgpu::Process::init(
       << "shader failed to link";
 
   add_backbuffers( shader->backbuffers() );
-  return _init( _width, _height, _channels );
+  return _init( _width, _height );
 };
 
 gpgpu::Process& gpgpu::Process::init(
     string frag_file, 
-    int _width, int _height, 
-    int _channels )
+    int _width, int _height)
 {
   _name = frag_file;
   file_path = frag_file;
@@ -50,17 +48,17 @@ gpgpu::Process& gpgpu::Process::init(
     ofLogError("gpgpu::Process") 
       << "[" << _name << "]: "
       << "shader failed to load";
-  return _init( _width, _height, _channels );
+  return _init( _width, _height );
 };
 
-gpgpu::Process& gpgpu::Process::_init(
-    int _width, int _height, 
-    int _channels )
+gpgpu::Process& gpgpu::Process::_init(int _width, int _height)
 {
+  check_gl_extension("GL_EXT_gpu_shader4");
+  check_gl_extension("GL_ARB_texture_rectangle");
 
   this->_width = _width;
   this->_height = _height;
-  this->_channels = _channels;
+  this->_channels = 4;
 
   curfbo = 0;
 
@@ -72,15 +70,15 @@ gpgpu::Process& gpgpu::Process::_init(
 
   ofFbo::Settings& s = fbo_settings;
   s.internalformat = get_internal_format();
+  //TODO remove ARB extesion
+  //s.textureTarget = GL_TEXTURE_2D;
   s.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
   s.minFilter = GL_NEAREST;
   s.maxFilter = GL_NEAREST;
-  s.wrapModeHorizontal = GL_CLAMP;
-  s.wrapModeVertical = GL_CLAMP;
+  s.wrapModeHorizontal = GL_CLAMP_TO_EDGE;
+  s.wrapModeVertical = GL_CLAMP_TO_EDGE;
   s.width = _width;
   s.height = _height;
-  //0.8.0 bug: on ofFbo.cpp this line should be commented out
-  ////settings.numColorbuffers = settings.colorFormats.size();
   s.numColorbuffers = nbbufs > 0 ? nbbufs : 1;
 
   for ( int i = 0; i < 2; i++ )
@@ -653,9 +651,9 @@ void gpgpu::Process::update_watch()
   }
 }
 
+//TODO draw quad with opengles
 void gpgpu::Process::quad( float x, float y, float _width, float _height)
 {
-
   //TODO set st [0,1] to avoid doing this in frags:
   //vec2 st = gl_TexCoord[0].xy / process_size * vec2(textureSize2DRect(data,0))
   float s = _width;
@@ -686,33 +684,17 @@ void gpgpu::Process::quad( float x, float y, float _width, float _height)
   glVertex3f(x, y + _height, 0);
 
   glEnd();
-
 };
 
 int gpgpu::Process::get_format()
 {
-  switch(_channels) 
-  {
-    case 1:
-      return GL_LUMINANCE;
-    case 3:
-      return GL_RGB;
-    default:
-      return GL_RGBA;
-  };
+  return GL_RGBA;
 };
 
 int gpgpu::Process::get_internal_format()
 {
-  switch(_channels) 
-  {
-    case 1:
-      return GL_LUMINANCE32F_ARB;
-    case 3:
-      return GL_RGB32F_ARB;
-    default:
-      return GL_RGBA32F_ARB;
-  };
+  //TODO remove ARB extesion
+  return GL_RGBA32F_ARB; //GL_RGBA32F;
 };
 
 gpgpu::Process& gpgpu::Process::update_render( string id )
@@ -752,7 +734,7 @@ void gpgpu::Process::set_render( string frag_file_d )
   if ( _render != nullptr )
     return;
   _render = new Process();
-  _render->init( frag_file_d, _width, _height, _channels );
+  _render->init( frag_file_d, _width, _height );
 };
 
 void gpgpu::Process::_render_init_from_code()
@@ -826,6 +808,6 @@ void gpgpu::Process::_render_init_from_code()
     //<< _render->of_shader.getShaderSource( GL_FRAGMENT_SHADER )
     //<< " xxxxxxxxxxxxxxxxxxxxxxxxx\n\n";
 
-  _render->_init( _width, _height, _channels );
+  _render->_init( _width, _height );
 };
 

@@ -27,13 +27,11 @@ namespace gpgpu
 
       Process& init(
           gpgpu::Shader* shader, 
-          int _width, int _height, 
-          int _channels = 4 ); 
+          int _width, int _height); 
 
       Process& init(
           string frag_file, 
-          int _width, int _height, 
-          int _channels = 4 );
+          int _width, int _height);
 
       Process& update( int passes = 1 );
 
@@ -141,7 +139,7 @@ namespace gpgpu
 
       gpgpu::Shader* shader; 
 
-      Process& _init( int _width, int _height, int _channels = 4 );
+      Process& _init( int _width, int _height );
 
       void set_bbuf_data( string id, vector<float>& data );
       void set_tex_data( ofTexture& tex, vector<float>& data, string id );
@@ -177,6 +175,13 @@ namespace gpgpu
 
       Process* _render;
       void _render_init_from_code();
+
+      void check_gl_extension(string ext)
+      {
+        if (!ofGLCheckExtension(ext))
+          ofLogError("gpgpu::Process") 
+            << ext << " not supported";
+      };
 
       ofEvent<ofShader> on_init;
       ofEvent<ofShader> on_update;
