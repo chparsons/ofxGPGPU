@@ -123,10 +123,10 @@ namespace gpgpu
       int curfbo;
       string _name;
 
-      ofFbo::Settings fbo_settings;
+      ofFboSettings fbo_settings;
       ofFbo* fbos[2];
       void init_fbo( ofFbo& fbo );
-      void init_fbo( ofFbo& fbo, ofFbo::Settings& s );
+      void init_fbo( ofFbo& fbo, ofFboSettings& s );
       void set_fbo( ofTexture& src, ofFbo& dst );
       void set_fbo( ofTexture& src, ofFbo& dst, int w, int h );
       map<string,ofTexture> inputs;

@@ -53,6 +53,7 @@ gpgpu::Process& gpgpu::Process::init(
 
 gpgpu::Process& gpgpu::Process::_init(int _width, int _height)
 {
+  ofDisableArbTex();
   check_gl_extension("GL_EXT_gpu_shader4");
   check_gl_extension("GL_ARB_texture_rectangle");
 
@@ -68,17 +69,17 @@ gpgpu::Process& gpgpu::Process::_init(int _width, int _height)
 
   // init ping pong fbos
 
-  ofFbo::Settings& s = fbo_settings;
+  ofFboSettings& s = fbo_settings;
+  s.width = _width;
+  s.height = _height;
   s.internalformat = get_internal_format();
   //TODO remove ARB extesion
-  //s.textureTarget = GL_TEXTURE_2D;
-  s.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
+  s.textureTarget = GL_TEXTURE_2D;
+  //s.textureTarget = GL_TEXTURE_RECTANGLE_ARB;
   s.minFilter = GL_NEAREST;
   s.maxFilter = GL_NEAREST;
   s.wrapModeHorizontal = GL_CLAMP_TO_EDGE;
-  s.wrapModeVertical = GL_CLAMP_TO_EDGE;
-  s.width = _width;
-  s.height = _height;
+  s.wrapModeVertical = GL_CLAMP_TO_EDGE; 
   s.numColorbuffers = nbbufs > 0 ? nbbufs : 1;
 
   for ( int i = 0; i < 2; i++ )
@@ -286,7 +287,7 @@ void gpgpu::Process::init_fbo( ofFbo& fbo )
   return init_fbo( fbo, fbo_settings );
 };
 
-void gpgpu::Process::init_fbo( ofFbo& fbo, ofFbo::Settings& s )
+void gpgpu::Process::init_fbo( ofFbo& fbo, ofFboSettings& s )
 {
   if ( fbo.isAllocated() )
     return;
@@ -378,7 +379,7 @@ ofTexture gpgpu::Process::get_scaled_tex( ofTexture& src, float scale )
   if ( scale == 1.0 )
     return src; //a copy
 
-  ofFbo::Settings s = fbo_settings; //copy
+  ofFboSettings s = fbo_settings; //copy
   s.width = src.getWidth() * scale;
   s.height = src.getHeight() * scale;
 
@@ -658,6 +659,8 @@ void gpgpu::Process::quad( float x, float y, float _width, float _height)
   //vec2 st = gl_TexCoord[0].xy / process_size * vec2(textureSize2DRect(data,0))
   float s = _width;
   float t = _height;
+  //float s = 0.0;
+  //float t = 1.0;
 
   glBegin(GL_TRIANGLES);
 
@@ -694,7 +697,8 @@ int gpgpu::Process::get_format()
 int gpgpu::Process::get_internal_format()
 {
   //TODO remove ARB extesion
-  return GL_RGBA32F_ARB; //GL_RGBA32F;
+  return GL_RGBA32F;
+  //return GL_RGBA32F_ARB;
 };
 
 gpgpu::Process& gpgpu::Process::update_render( string id )
